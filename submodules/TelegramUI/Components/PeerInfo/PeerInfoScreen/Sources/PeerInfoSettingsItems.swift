@@ -199,8 +199,8 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     items[.kunigram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .text("Plugins"), text: "KuniGram", icon: PresentationResourcesSettings.appearance, action: {
         interaction.openSettings(.kunigram)
     }))
-    if KuniGramLocalGiftStore.shared.isGramWalletEnabled {
-        let balanceStr = String(format: "%.2f TON", KuniGramLocalGiftStore.shared.gramWalletBalanceTON)
+    if UserDefaults.standard.bool(forKey: "kunigram_gram_wallet_enabled") {
+        let balanceStr = String(format: "%.2f TON", UserDefaults.standard.double(forKey: "kunigram_gram_wallet_balance_ton"))
         let walletTitle = presentationData.strings.primaryComponent.languageCode.lowercased().hasPrefix("ru") ? "Gram Кошелёк" : "Gram Wallet"
         items[.wallet]!.append(PeerInfoScreenDisclosureItem(id: 1, label: .text(balanceStr), text: walletTitle, icon: PresentationResourcesSettings.stars, action: {
             interaction.openSettings(.gramWallet)
