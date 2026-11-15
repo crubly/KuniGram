@@ -29,7 +29,7 @@ jobs:
       - name: Restore Bazel disk cache
         uses: actions/cache@v4
         with:
-          path: /Users/Shared/bazel-disk-cache
+          path: ${{ runner.temp }}/bazel-disk-cache
           key: bazel-debug-arm64-${{ hashFiles('.bazelrc', 'versions.json', 'WORKSPACE', 'MODULE.bazel') }}
           restore-keys: |
             bazel-debug-arm64-
@@ -37,7 +37,7 @@ jobs:
       - name: Prepare canonical source directory
         run: |
           sudo mkdir -p /Users/Shared
-          sudo mkdir -p /Users/Shared/bazel-disk-cache
+          mkdir -p "${{ runner.temp }}/bazel-disk-cache"
           sudo rm -rf /Users/Shared/telegram-ios
           cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
 
@@ -59,7 +59,7 @@ jobs:
           python3 -u build-system/Make/Make.py \
             --overrideXcodeVersion \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
-            --cacheDir=/Users/Shared/bazel-disk-cache \
+            --cacheDir="${{ runner.temp }}/bazel-disk-cache" \
             build \
             --configurationPath="build-system/appstore-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
