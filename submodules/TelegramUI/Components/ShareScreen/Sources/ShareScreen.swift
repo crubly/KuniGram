@@ -351,15 +351,23 @@ public final class ShareScreen: ViewControllerComponentContainer {
         self.preferredAction = preferredAction
         self.externalShareSubject = externalShareSubject
         self.shareAsLink = shareAsLink
-        self.model = ShareScreenState(context: context)
-        self.model.defersItemsUntilFirstLoad = externalConfiguration != nil
-        self.sender = ShareScreenSendCoordinator(context: context, subject: subject)
+        let model = ShareScreenState(context: context)
+        model.defersItemsUntilFirstLoad = externalConfiguration != nil
+        let sender = ShareScreenSendCoordinator(context: context, subject: subject)
         let contentReady = self.contentReady
-        self.model.firstLoadCompleted = {
+        model.firstLoadCompleted = {
             contentReady.set(.single(true))
         }
-        self.caption = NSAttributedString(string: presetText ?? "")
-        super.init(context: context, component: ShareScreenComponent(model: self.model, sender: self.sender, externalShare: externalShare, initialCaption: self.caption, hasStory: shareStory != nil, animateOut: self.animateOut), navigationBarAppearance: .none, statusBarStyle: .ignore, theme: forceTheme.map { .custom($0) } ?? .default, updatedPresentationData: updatedPresentationData)
+        let caption = NSAttributedString(string: presetText ?? "")
+        let animateOut = self.animateOut
+        self.model = model
+        self.sender = sender
+        self.caption = caption
+        super.init(context: context, component: ShareScreenComponent(model: model, sender: sender, externalShare: externalShare, initialCaption: caption, hasStory: shareStory != nil, animateOut: animateOut), navigationBarAppearance: .none, statusBarStyle: .ignore, theme: forceTheme.map { .custom($0) } ?? .default, updatedPresentationData: updatedPresentationData)
+        self.finishSetup(context: context, externalConfiguration: externalConfiguration, immediatePeerId: immediatePeerId)
+    }
+
+    private func finishSetup(context: AccountContext, externalConfiguration: ShareScreenExternalConfiguration?, immediatePeerId: EnginePeer.Id?) {
         self.navigationPresentation = .flatModal
         self.configureSender()
         if let externalConfiguration {
