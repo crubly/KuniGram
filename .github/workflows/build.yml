@@ -1,0 +1,76 @@
+name: Build KuniGram iOS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Select latest Xcode
+        run: |
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
+          echo "Using Xcode: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: Prepare canonical source directory
+        run: |
+          sudo mkdir -p /Users/Shared
+          sudo rm -rf /Users/Shared/telegram-ios
+          cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
+
+      - name: Build KuniGram IPA
+        run: |
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          BAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"
+          cd "$SOURCE_DIR"
+
+          BUILD_NUMBER_OFFSET="$(cat build_number_offset)"
+          APP_VERSION=$(python3 -c 'import json; print(json.load(open("versions.json"))["app"])')
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          BUILD_NUMBER=$((COMMIT_COUNT + BUILD_NUMBER_OFFSET))
+
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          python3 -u build-system/Make/Make.py \
+            --overrideXcodeVersion \
+            --bazelUserRoot="$BAZEL_USER_ROOT" \
+            build \
+            --configurationPath="build-system/appstore-configuration.json" \
+            --codesigningInformationPath=build-system/fake-codesigning \
+            --configuration=release_arm64 \
+            --buildNumber="$BUILD_NUMBER"
+
+          OUTPUT_PATH="build/artifacts"
+          rm -rf "$OUTPUT_PATH"
+          mkdir -p "$OUTPUT_PATH"
+          cp bazel-bin/Telegram/Telegram.ipa "$OUTPUT_PATH/KuniGram.ipa"
+
+      - name: Upload KuniGram.ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KuniGram-iOS-IPA
+          path: /Users/Shared/telegram-ios/build/artifacts/KuniGram.ipa
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION }}-b${{ env.BUILD_NUMBER }}
+          name: KuniGram iOS ${{ env.APP_VERSION }} (${{ env.BUILD_NUMBER }})
+          body: Unsigned KuniGram iOS IPA build (${{ env.APP_VERSION }}, build ${{ env.BUILD_NUMBER }})
+          files: /Users/Shared/telegram-ios/build/artifacts/KuniGram.ipa

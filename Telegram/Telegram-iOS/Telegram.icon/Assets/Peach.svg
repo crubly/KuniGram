@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="peachGrad" x1="30%" y1="15%" x2="75%" y2="85%">
+      <stop offset="0%" stop-color="#FFC78A"/>
+      <stop offset="55%" stop-color="#FF8A6B"/>
+      <stop offset="100%" stop-color="#F55C61"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#73D67A"/>
+      <stop offset="100%" stop-color="#38A35C"/>
+    </linearGradient>
+  </defs>
+  <!-- Peach body -->
+  <path d="M512 839 C685 829 830 709 822 549 C816 389 745 279 645 279 C580 279 535 312 512 334 C489 312 444 279 379 279 C279 279 208 389 202 549 C194 709 339 829 512 839 Z"
+        fill="url(#peachGrad)" stroke="#5C291F" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Crease -->
+  <path d="M512 334 C530 409 545 504 525 584" fill="none" stroke="#5C291F" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+  <!-- Highlight -->
+  <ellipse cx="340" cy="455" rx="40" ry="75" transform="rotate(24 340 455)" fill="#FFF5E0" opacity="0.45"/>
+  <!-- Stem -->
+  <path d="M512 336 C505 274 515 224 535 184" fill="none" stroke="#6B4026" stroke-width="26" stroke-linecap="round"/>
+  <!-- Leaf -->
+  <path d="M522 276 C585 184 680 159 745 182 C710 276 615 306 522 276 Z"
+        fill="url(#leafGrad)" stroke="#2E5C33" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M545 266 Q625 234 695 204" fill="none" stroke="#2E5C33" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+</svg>

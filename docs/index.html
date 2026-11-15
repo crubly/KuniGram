@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KuniGram iOS — Документация Plugins Engine</title>
+  <link rel="icon" type="image/png" href="assets/kunigram-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top">
+      <img src="assets/kunigram-icon.png" alt="KuniGram Icon" />
+      <span>KuniGram Docs</span>
+    </a>
+    <div class="topbar-actions">
+      <button id="lang-toggle" class="lang-btn">EN</button>
+    </div>
+  </header>
+
+  <div class="layout" id="top">
+    <aside class="sidebar">
+      <h4 data-ru="Навигация" data-en="Navigation">Навигация</h4>
+      <ul>
+        <li><a href="#overview" data-ru="Обзор" data-en="Overview">Обзор</a></li>
+        <li><a href="#quickstart" data-ru="Быстрый старт" data-en="Quick Start">Быстрый старт</a></li>
+        <li><a href="#hooks" data-ru="События (Hooks)" data-en="Event Hooks">События (Hooks)</a></li>
+        <li><a href="#api-tg" data-ru="Telegram API (api.tg)" data-en="Telegram API (api.tg)">Telegram API (api.tg)</a></li>
+        <li><a href="#api-net" data-ru="Сеть и WebSocket" data-en="Network & WebSocket">Сеть и WebSocket</a></li>
+        <li><a href="#api-camera" data-ru="Камера и Медиа" data-en="Camera & Media">Камера и Медиа</a></li>
+        <li><a href="#api-ui" data-ru="UI и Хранилище" data-en="UI & Storage">UI и Хранилище</a></li>
+        <li><a href="#examples" data-ru="Примеры плагинов" data-en="Plugin Examples">Примеры плагинов</a></li>
+        <li><a href="#disguise" data-ru="Маскировка под Telegram" data-en="Telegram Disguise">Маскировка под Telegram</a></li>
+      </ul>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <img src="assets/kunigram-icon.png" alt="KuniGram Peach Icon" />
+        <div>
+          <span class="badge">KuniGram iOS • Python Plugins Engine</span>
+          <h1 data-ru="Документация KuniGram" data-en="KuniGram Documentation">Документация KuniGram</h1>
+          <p data-ru="Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, полным доступом к Telegram API, внешним серверам, камере и режимом маскировки."
+             data-en="Custom Telegram-iOS client with a built-in Python Plugins Engine, full Telegram API bridge, external HTTP/WebSocket networking, camera capture, and Telegram disguise mode.">
+            Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, полным доступом к Telegram API, внешним серверам, камере и режимом маскировки.
+          </p>
+        </div>
+      </div>
+
+      <section id="overview">
+        <h2 data-ru="Обзор возможностей" data-en="Overview">Обзор возможностей</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h4 data-ru="Ядро Плагинов (Python)" data-en="Python Plugins Engine">Ядро Плагинов (Python)</h4>
+            <p data-ru="Загружайте .py файлы из Файлов или буфера обмена, включайте/выключайте переключателем, смотрите логи и удаляйте в один тап."
+               data-en="Import .py files from Files or clipboard, toggle plugins on/off, inspect live execution logs, and delete anytime.">
+              Загружайте .py файлы из Файлов или буфера обмена, включайте/выключайте переключателем, смотрите логи и удаляйте в один тап.
+            </p>
+          </div>
+          <div class="card">
+            <h4 data-ru="Полный Telegram API" data-en="Full Telegram API">Полный Telegram API</h4>
+            <p data-ru="Отправка, редактирование, удаление, пересылка сообщений, реакции, фото, файлы, получение чатов и профиля."
+               data-en="Send, edit, delete, forward messages, send reactions, photos, files, fetch chats and user profiles.">
+              Отправка, редактирование, удаление, пересылка сообщений, реакции, фото, файлы, получение чатов и профиля.
+            </p>
+          </div>
+          <div class="card">
+            <h4 data-ru="Внешние серверы и WebSocket" data-en="External Servers & WebSocket">Внешние серверы и WebSocket</h4>
+            <p data-ru="Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений."
+               data-en="Built-in api.net and requests modules for HTTP GET/POST/PUT/DELETE and persistent WebSocket connections.">
+              Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений.
+            </p>
+          </div>
+          <div class="card">
+            <h4 data-ru="Камера, Медиа и Маскировка" data-en="Camera, Media & Disguise">Камера, Медиа и Маскировка</h4>
+            <p data-ru="Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram."
+               data-en="Capture photos via api.camera.take_photo(), resize images, save to gallery, and switch app icon to Telegram.">
+              Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="quickstart">
+        <h2 data-ru="Быстрый старт" data-en="Quick Start">Быстрый старт</h2>
+        <p data-ru="Откройте Настройки → KuniGram → Ядро Плагинов. Каждый плагин — это обычный .py файл с метаданными в начале файла:"
+           data-en="Open Settings → KuniGram → Plugins Engine. Every plugin is a .py file with metadata headers at the top:">
+          Откройте Настройки → KuniGram → Ядро Плагинов. Каждый плагин — это обычный .py файл с метаданными в начале файла:
+        </p>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>__id__ = "hello_kunigram"
+__name__ = "Hello KuniGram"
+__author__ = "YourName"
+__version__ = "1.0.0"
+__description__ = "Пример первого плагина для KuniGram"
+
+def on_load(api):
+    api.log("Плагин запущен!")
+    api.ui.show_toast("Hello from KuniGram Python!")
+
+def on_command(cmd, args, msg):
+    if cmd == "ping":
+        api.tg.send_message(msg["peer_id"], "Pong! 🍑", reply_to=msg["message_id"])</code></pre>
+        </div>
+      </section>
+
+      <section id="hooks">
+        <h2 data-ru="События (Hooks)" data-en="Event Hooks">События (Hooks)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Hook</th>
+              <th data-ru="Аргументы" data-en="Arguments">Аргументы</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>on_load(api)</code></td><td><code>api</code></td><td data-ru="Вызывается при включении и загрузке плагина" data-en="Called when the plugin is enabled and loaded">Вызывается при включении и загрузке плагина</td></tr>
+            <tr><td><code>on_unload()</code></td><td>—</td><td data-ru="Вызывается при выключении или удалении плагина" data-en="Called when the plugin is disabled or deleted">Вызывается при выключении или удалении плагина</td></tr>
+            <tr><td><code>on_message(msg)</code></td><td><code>dict</code></td><td data-ru="Входящее сообщение (peer_id, message_id, sender_id, text)" data-en="Incoming message dict">Входящее сообщение (peer_id, message_id, sender_id, text)</td></tr>
+            <tr><td><code>on_outgoing_message(msg)</code></td><td><code>dict</code></td><td data-ru="Исходящее сообщение" data-en="Outgoing message dict">Исходящее сообщение</td></tr>
+            <tr><td><code>on_command(cmd, args, msg)</code></td><td><code>str, str, dict</code></td><td data-ru="Команда вида .cmd args" data-en="Command starting with .cmd args">Команда вида <code>.cmd args</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="api-tg">
+        <h2>Telegram API (<code>api.tg</code> / <code>import tg</code>)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>tg.get_me()</code></td><td data-ru="Текущий аккаунт (id, title, username, is_bot)" data-en="Current user info">Текущий аккаунт (id, title, username, is_bot)</td></tr>
+            <tr><td><code>tg.get_user(peer_id)</code></td><td data-ru="Информация о пользователе или чате" data-en="Fetch peer info">Информация о пользователе или чате</td></tr>
+            <tr><td><code>tg.get_chats(limit=30)</code></td><td data-ru="Список последних диалогов" data-en="List recent chats">Список последних диалогов</td></tr>
+            <tr><td><code>tg.send_message(peer_id, text, reply_to=None)</code></td><td data-ru="Отправить текстовое сообщение" data-en="Send a text message">Отправить текстовое сообщение</td></tr>
+            <tr><td><code>tg.edit_message(peer_id, message_id, text)</code></td><td data-ru="Редактировать сообщение" data-en="Edit an existing message">Редактировать сообщение</td></tr>
+            <tr><td><code>tg.delete_messages(peer_id, message_ids, for_everyone=True)</code></td><td data-ru="Удалить сообщения" data-en="Delete messages">Удалить сообщения</td></tr>
+            <tr><td><code>tg.forward_messages(from_peer, to_peer, message_ids)</code></td><td data-ru="Переслать сообщения" data-en="Forward messages">Переслать сообщения</td></tr>
+            <tr><td><code>tg.send_photo(peer_id, path, caption="")</code></td><td data-ru="Отправить фото по пути к файлу" data-en="Send a photo from local path">Отправить фото по пути к файлу</td></tr>
+            <tr><td><code>tg.send_file(peer_id, path, caption="")</code></td><td data-ru="Отправить документ/файл" data-en="Send any file">Отправить документ/файл</td></tr>
+            <tr><td><code>tg.send_reaction(peer_id, message_id, emoji)</code></td><td data-ru="Поставить реакцию на сообщение" data-en="React to a message">Поставить реакцию на сообщение</td></tr>
+            <tr><td><code>tg.set_typing(peer_id)</code></td><td data-ru="Отправить статус «печатает...»" data-en="Send typing action">Отправить статус «печатает...»</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="api-net">
+        <h2 data-ru="Сеть и WebSocket (api.net / requests)" data-en="Network & WebSocket (api.net / requests)">Сеть и WebSocket (<code>api.net</code> / <code>requests</code>)</h2>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>import requests
+import json
+
+resp = requests.post(
+    "https://api.example.com/webhook",
+    json={"event": "ping", "user": "kunigram"},
+    headers={"Authorization": "Bearer TOKEN"}
+)
+if resp["status"] == 200:
+    data = resp["json"]
+    api.log(f"Server replied: {data}")
+
+# WebSocket
+ws = api.net.ws_connect("wss://echo.websocket.events")
+api.net.ws_send(ws, json.dumps({"hello": "server"}))
+api.net.ws_close(ws)</code></pre>
+        </div>
+      </section>
+
+      <section id="api-camera">
+        <h2 data-ru="Камера и Медиа (api.camera / api.media)" data-en="Camera & Media (api.camera / api.media)">Камера и Медиа (<code>api.camera</code> / <code>api.media</code>)</h2>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code># Сделать фото с основной или фронтальной камеры ("back" / "front")
+photo = api.camera.take_photo(camera="back")
+if "path" in photo:
+    # Отправить сразу в чат Telegram
+    api.tg.send_photo(peer_id, photo["path"], caption="Снято из плагина KuniGram!")
+    # Или сохранить в Фотоплёнку
+    api.media.save_to_gallery(photo["path"])</code></pre>
+        </div>
+      </section>
+
+      <section id="api-ui">
+        <h2 data-ru="UI, Логи и Хранилище (api.ui / api.storage)" data-en="UI, Logs & Storage (api.ui / api.storage)">UI, Логи и Хранилище (<code>api.ui</code> / <code>api.storage</code>)</h2>
+        <ul>
+          <li><code>api.ui.show_toast(text)</code> — <span data-ru="показать всплывающее уведомление внутри Telegram" data-en="show an in-app toast banner">показать всплывающее уведомление внутри Telegram</span></li>
+          <li><code>api.ui.show_alert(title, message)</code> — <span data-ru="показать диалоговое окно" data-en="show an alert dialog">показать диалоговое окно</span></li>
+          <li><code>api.storage.set(key, value)</code> / <code>api.storage.get(key, default=None)</code> — <span data-ru="персистентное JSON-хранилище плагина" data-en="persistent per-plugin JSON storage">персистентное JSON-хранилище плагина</span></li>
+          <li><code>api.log(text)</code> / <code>print(...)</code> — <span data-ru="запись в консоль логов плагина" data-en="write to plugin execution console">запись в консоль логов плагина</span></li>
+        </ul>
+      </section>
+
+      <section id="examples">
+        <h2 data-ru="Примеры готовых плагинов" data-en="Plugin Examples">Примеры готовых плагинов</h2>
+
+        <h3 data-ru="1. Команда .snap — сделать фото и отправить в чат" data-en="1. .snap command — take photo and send to chat">1. Команда <code>.snap</code> — сделать фото и отправить в чат</h3>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>__id__ = "quick_snap"
+__name__ = "Quick Snap"
+__author__ = "KuniGram"
+__version__ = "1.0"
+__description__ = "Делает фото по команде .snap front / .snap back"
+
+def on_command(cmd, args, msg):
+    if cmd == "snap":
+        cam = "front" if "front" in args else "back"
+        res = api.camera.take_photo(camera=cam)
+        if "path" in res:
+            api.tg.send_photo(msg["peer_id"], res["path"], caption="📸 KuniGram Snap")
+        else:
+            api.ui.show_toast("Camera error: " + str(res.get("error", "")))</code></pre>
+        </div>
+
+        <h3 data-ru="2. Мост с внешним сервером (.ask)" data-en="2. External Server Bridge (.ask)">2. Мост с внешним сервером (<code>.ask</code>)</h3>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>__id__ = "server_bridge"
+__name__ = "Server Bridge"
+__author__ = "KuniGram"
+__version__ = "1.0"
+__description__ = "Отправляет запрос на ваш сервер и отвечает в чат"
+
+import requests
+
+def on_command(cmd, args, msg):
+    if cmd == "ask":
+        api.tg.set_typing(msg["peer_id"])
+        r = requests.post("https://your-server.example.com/ask", json={"prompt": args})
+        if r["status"] == 200 and r["json"]:
+            answer = r["json"].get("answer", "Empty response")
+            api.tg.send_message(msg["peer_id"], answer, reply_to=msg["message_id"])</code></pre>
+        </div>
+      </section>
+
+      <section id="disguise">
+        <h2 data-ru="Дополнительные настройки: Маскировка под Telegram" data-en="Additional Settings: Disguise as Telegram">Дополнительные настройки: Маскировка под Telegram</h2>
+        <p data-ru="В самом низу меню KuniGram находится раздел «Дополнительные настройки» с переключателем «Маскировка под Telegram»."
+           data-en="At the bottom of the KuniGram menu, Additional Settings contains the Disguise as Telegram toggle.">
+          В самом низу меню KuniGram находится раздел <strong>Дополнительные настройки</strong> с переключателем <strong>Маскировка под Telegram</strong>.
+        </p>
+        <ul>
+          <li data-ru="По умолчанию приложение называется KuniGram и использует рисованную иконку персика на белом фоне."
+              data-en="By default, the app is named KuniGram and uses the illustrated peach-on-white icon.">
+            По умолчанию приложение называется <code>KuniGram</code> и использует рисованную иконку персика на белом фоне.
+          </li>
+          <li data-ru="При включении маскировки иконка приложения на домашнем экране iPhone немедленно меняется на стандартную синюю иконку Telegram через UIApplication.setAlternateIconName."
+              data-en="When enabled, the iPhone home screen icon switches immediately to the standard blue Telegram icon via UIApplication.setAlternateIconName.">
+            При включении маскировки иконка приложения на домашнем экране iPhone немедленно меняется на стандартную синюю иконку Telegram через <code>UIApplication.setAlternateIconName</code>.
+          </li>
+          <li data-ru="Ограничение iOS: система Apple не позволяет менять CFBundleDisplayName (подпись под иконкой на рабочем столе) динамически во время работы без пересборки/переподписи пакета."
+              data-en="iOS limitation: Apple does not allow changing CFBundleDisplayName on the home screen dynamically at runtime without rebuilding/resigning.">
+            Ограничение iOS: система Apple не позволяет менять <code>CFBundleDisplayName</code> (подпись под иконкой на рабочем столе) динамически во время работы без пересборки/переподписи пакета.
+          </li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
