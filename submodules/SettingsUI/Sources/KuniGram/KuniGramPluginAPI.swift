@@ -290,7 +290,7 @@ public final class KuniGramPluginAPI {
             let _ = updateMessageReactionsInteractively(
                 account: context.account,
                 messageIds: [msgId],
-                reactions: [.reaction(value: .builtin(emoji), isSelected: true)],
+                reactions: [.builtin(emoji)],
                 isLarge: false,
                 storeAsRecentlyUsed: false
             ).startStandalone()
