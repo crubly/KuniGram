@@ -58,101 +58,116 @@ public final class KuniGramPluginAPI {
     // MARK: - Telegram API (`api.tg`)
 
     public func buildTelegramModule() -> KuniPyValue {
-        let methods: [String: KuniPyValue] = [
-            "get_me": .nativeFunction { [weak self] _, _ in
-                guard let self = self, let context = self.context else { return .none }
-                let semaphore = DispatchSemaphore(value: 0)
-                var result: KuniPyValue = .none
-                let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
-                |> take(1)).startStandalone(next: { peer in
-                    if let peer = peer {
-                        result = Self.peerToPyDict(peer)
-                    }
-                    semaphore.signal()
-                })
-                _ = semaphore.wait(timeout: .now() + 5.0)
-                return result
-            },
-            "get_user": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .none }
-                let rawId = kwargs["peer_id"]?.intValue ?? args.first?.intValue ?? 0
-                let peerId = PeerId(rawId)
-                let semaphore = DispatchSemaphore(value: 0)
-                var result: KuniPyValue = .none
-                let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
-                |> take(1)).startStandalone(next: { peer in
-                    if let peer = peer {
-                        result = Self.peerToPyDict(peer)
-                    }
-                    semaphore.signal()
-                })
-                _ = semaphore.wait(timeout: .now() + 5.0)
-                return result
-            },
-            "send_message": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                let peerRaw = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil)
-                let text = kwargs["text"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
-                guard let rawId = peerRaw, !text.isEmpty else { return .bool(false) }
+        var methods: [String: KuniPyValue] = [:]
 
-                let peerId = PeerId(rawId)
-                var replySubject: EngineMessageReplySubject? = nil
-                if let replyMsgId = kwargs["reply_to"]?.intValue ?? (args.count > 2 ? args[2].intValue : nil) {
-                    let msgId = MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(replyMsgId))
-                    replySubject = EngineMessageReplySubject(messageId: msgId, quote: nil, innerSubject: nil)
+        methods["get_me"] = .nativeFunction { [weak self] _, _ in
+            guard let self = self, let context = self.context else { return .none }
+            let semaphore = DispatchSemaphore(value: 0)
+            var result: KuniPyValue = .none
+            let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
+            |> take(1)).startStandalone(next: { peer in
+                if let peer = peer {
+                    result = Self.peerToPyDict(peer)
                 }
+                semaphore.signal()
+            })
+            _ = semaphore.wait(timeout: .now() + 5.0)
+            return result
+        }
 
-                let message = EnqueueMessage.message(
-                    text: text,
-                    attributes: [],
-                    inlineStickers: [:],
-                    mediaReference: nil,
-                    threadId: nil,
-                    replyToMessageId: replySubject,
-                    replyToStoryId: nil,
-                    localGroupingKey: nil,
-                    correlationId: nil,
-                    bubbleUpEmojiOrStickersets: []
-                )
-                let _ = enqueueMessages(account: context.account, peerId: peerId, messages: [message]).startStandalone()
-                self.logHandler("tg.send_message -> peer \(rawId)")
-                return .bool(true)
-            },
-            "edit_message": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
-                      let rawMsgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
-                    return .bool(false)
+        methods["get_user"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .none }
+            let rawId = kwargs["peer_id"]?.intValue ?? args.first?.intValue ?? 0
+            let peerId = PeerId(rawId)
+            let semaphore = DispatchSemaphore(value: 0)
+            var result: KuniPyValue = .none
+            let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> take(1)).startStandalone(next: { peer in
+                if let peer = peer {
+                    result = Self.peerToPyDict(peer)
                 }
-                let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
-                let msgId = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(rawMsgId))
-                let _ = context.engine.messages.editMessage(messageId: msgId, text: text, media: .keep, entities: nil, webpagePreviewAttribute: nil, invertMediaAttribute: nil).startStandalone()
-                self.logHandler("tg.edit_message -> \(rawMsgId)")
-                return .bool(true)
-            },
-            "delete_messages": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
-                    return .bool(false)
-                }
-                let peerId = PeerId(rawPeer)
-                var ids: [MessageId] = []
-                if case let .list(arr)? = kwargs["message_ids"] ?? (args.count > 1 ? args[1] : nil) {
-                    for item in arr {
-                        if let mid = item.intValue {
-                            ids.append(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(mid)))
-                        }
+                semaphore.signal()
+            })
+            _ = semaphore.wait(timeout: .now() + 5.0)
+            return result
+        }
+
+        methods["send_message"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            let peerRaw = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil)
+            let text = kwargs["text"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
+            guard let rawId = peerRaw, !text.isEmpty else { return .bool(false) }
+
+            let peerId = PeerId(rawId)
+            var replySubject: EngineMessageReplySubject? = nil
+            if let replyMsgId = kwargs["reply_to"]?.intValue ?? (args.count > 2 ? args[2].intValue : nil) {
+                let msgId = MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(replyMsgId))
+                replySubject = EngineMessageReplySubject(messageId: msgId, quote: nil, innerSubject: nil)
+            }
+
+            let message = EnqueueMessage.message(
+                text: text,
+                attributes: [],
+                inlineStickers: [:],
+                mediaReference: nil,
+                threadId: nil,
+                replyToMessageId: replySubject,
+                replyToStoryId: nil,
+                localGroupingKey: nil,
+                correlationId: nil,
+                bubbleUpEmojiOrStickersets: []
+            )
+            let _ = enqueueMessages(account: context.account, peerId: peerId, messages: [message]).startStandalone()
+            self.logHandler("tg.send_message -> peer \(rawId)")
+            return .bool(true)
+        }
+
+        methods["edit_message"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                  let rawMsgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                return .bool(false)
+            }
+            let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
+            let msgId = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(rawMsgId))
+            let _ = context.engine.messages.requestEditMessage(
+                messageId: msgId,
+                text: text,
+                media: .keep,
+                entities: nil,
+                richText: nil,
+                inlineStickers: [:],
+                webpagePreviewAttribute: nil,
+                invertMediaAttribute: nil
+            ).startStandalone()
+            self.logHandler("tg.edit_message -> \(rawMsgId)")
+            return .bool(true)
+        }
+
+        methods["delete_messages"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
+                return .bool(false)
+            }
+            let peerId = PeerId(rawPeer)
+            var ids: [MessageId] = []
+            if case let .list(arr)? = kwargs["message_ids"] ?? (args.count > 1 ? args[1] : nil) {
+                for item in arr {
+                    if let mid = item.intValue {
+                        ids.append(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(mid)))
                     }
-                } else if let singleId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) {
-                    ids.append(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(singleId)))
                 }
-                guard !ids.isEmpty else { return .bool(false) }
-                let forEveryone = (kwargs["for_everyone"] ?? (args.count > 2 ? args[2] : .bool(true))).isTruthy
-                let _ = context.engine.messages.deleteMessagesInteractively(messageIds: ids, type: forEveryone ? .forEveryone : .forLocalPeer).startStandalone()
-                self.logHandler("tg.delete_messages -> count \(ids.count)")
-                return .bool(true)
-            },
-            "forward_messages": .nativeFunction { [weak self] args, kwargs in
+            } else if let singleId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) {
+                ids.append(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: Int32(singleId)))
+            }
+            guard !ids.isEmpty else { return .bool(false) }
+            let forEveryone = (kwargs["for_everyone"] ?? (args.count > 2 ? args[2] : .bool(true))).isTruthy
+            let _ = context.engine.messages.deleteMessagesInteractively(messageIds: ids, type: forEveryone ? .forEveryone : .forLocalPeer).startStandalone()
+            self.logHandler("tg.delete_messages -> count \(ids.count)")
+            return .bool(true)
+        }
+
+        methods["forward_messages"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .bool(false) }
                 guard let fromPeerRaw = kwargs["from_peer"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
                       let toPeerRaw = kwargs["to_peer"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
@@ -171,10 +186,11 @@ public final class KuniGramPluginAPI {
                 }
                 guard !forwardMsgs.isEmpty else { return .bool(false) }
                 let _ = enqueueMessages(account: context.account, peerId: toPeerId, messages: forwardMsgs).startStandalone()
-                self.logHandler("tg.forward_messages -> \(forwardMsgs.count) msgs")
-                return .bool(true)
-            },
-            "send_photo": .nativeFunction { [weak self] args, kwargs in
+            self.logHandler("tg.forward_messages -> \(forwardMsgs.count) msgs")
+            return .bool(true)
+        }
+
+        methods["send_photo"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .bool(false) }
                 guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
                     return .bool(false)
@@ -217,10 +233,11 @@ public final class KuniGramPluginAPI {
                     bubbleUpEmojiOrStickersets: []
                 )
                 let _ = enqueueMessages(account: context.account, peerId: PeerId(rawPeer), messages: [msg]).startStandalone()
-                self.logHandler("tg.send_photo -> peer \(rawPeer)")
-                return .bool(true)
-            },
-            "send_file": .nativeFunction { [weak self] args, kwargs in
+            self.logHandler("tg.send_photo -> peer \(rawPeer)")
+            return .bool(true)
+        }
+
+        methods["send_file"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .bool(false) }
                 guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
                     return .bool(false)
@@ -258,54 +275,59 @@ public final class KuniGramPluginAPI {
                     bubbleUpEmojiOrStickersets: []
                 )
                 let _ = enqueueMessages(account: context.account, peerId: PeerId(rawPeer), messages: [msg]).startStandalone()
-                self.logHandler("tg.send_file -> \(url.lastPathComponent)")
-                return .bool(true)
-            },
-            "send_reaction": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
-                      let rawMsgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
-                    return .bool(false)
+            self.logHandler("tg.send_file -> \(url.lastPathComponent)")
+            return .bool(true)
+        }
+
+        methods["send_reaction"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                  let rawMsgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                return .bool(false)
+            }
+            let emoji = kwargs["emoji"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "❤️")
+            let msgId = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(rawMsgId))
+            let _ = updateMessageReactionsInteractively(
+                account: context.account,
+                messageIds: [msgId],
+                reactions: [.reaction(value: .builtin(emoji), isSelected: true)],
+                isLarge: false,
+                storeAsRecentlyUsed: false
+            ).startStandalone()
+            self.logHandler("tg.send_reaction -> \(emoji)")
+            return .bool(true)
+        }
+
+        methods["set_typing"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
+                return .bool(false)
+            }
+            context.account.updateLocalInputActivity(
+                peerId: PeerActivitySpace(peerId: PeerId(rawPeer), category: .global),
+                activity: .typingText,
+                isPresent: true
+            )
+            return .bool(true)
+        }
+
+        methods["get_chats"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .list([]) }
+            let limit = Int(kwargs["limit"]?.intValue ?? args.first?.intValue ?? 30)
+            let semaphore = DispatchSemaphore(value: 0)
+            var result: [KuniPyValue] = []
+            let _ = (context.engine.messages.chatListPeers(group: .root, filterPredicate: nil, count: limit)
+            |> take(1)).startStandalone(next: { peers, _ in
+                for peer in peers {
+                    result.append(Self.peerToPyDict(peer))
                 }
-                let emoji = kwargs["emoji"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "❤️")
-                let msgId = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(rawMsgId))
-                let _ = context.engine.messages.updateMessageReactionsInteractively(
-                    messageIds: [msgId],
-                    reactions: [.reaction(value: .builtin(emoji), isSelected: true)],
-                    isLarge: false,
-                    storeAsRecentlyUsed: false
-                ).startStandalone()
-                self.logHandler("tg.send_reaction -> \(emoji)")
-                return .bool(true)
-            },
-            "set_typing": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
-                    return .bool(false)
-                }
-                context.account.pendingMessageManager.updatePendingMessageAction(
-                    peerId: PeerId(rawPeer),
-                    threadId: nil,
-                    action: .text
-                )
-                return .bool(true)
-            },
-            "get_chats": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .list([]) }
-                let limit = Int(kwargs["limit"]?.intValue ?? args.first?.intValue ?? 30)
-                let semaphore = DispatchSemaphore(value: 0)
-                var result: [KuniPyValue] = []
-                let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Messages.ChatList(count: limit))
-                |> take(1)).startStandalone(next: { list in
-                    for item in list.items {
-                        result.append(Self.peerToPyDict(item.renderedPeer.peer))
-                    }
-                    semaphore.signal()
-                })
-                _ = semaphore.wait(timeout: .now() + 5.0)
-                return .list(result)
-            },
-            "get_star_gifts": .nativeFunction { [weak self] _, _ in
+                semaphore.signal()
+            })
+            _ = semaphore.wait(timeout: .now() + 5.0)
+            return .list(result)
+        }
+
+        methods["get_star_gifts"] = .nativeFunction { [weak self] _, _ in
                 guard let self = self, let context = self.context else { return .list([]) }
                 let _ = context.engine.payments.keepStarGiftsUpdated().startStandalone()
                 let semaphore = DispatchSemaphore(value: 0)
@@ -337,44 +359,49 @@ public final class KuniGramPluginAPI {
                     }
                     semaphore.signal()
                 })
-                _ = semaphore.wait(timeout: .now() + 5.0)
-                return .list(result)
-            },
-            "send_star_gift": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .dict(["ok": .bool(false), "error": .string("No context")]) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
-                      let giftId = kwargs["gift_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
-                    return .dict(["ok": .bool(false), "error": .string("peer_id and gift_id required")])
-                }
-                let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
-                let hideName = (kwargs["hide_name"] ?? (args.count > 3 ? args[3] : .bool(false))).isTruthy
-                let includeUpgrade = (kwargs["upgrade"] ?? .bool(false)).isTruthy
-                let source = BotPaymentInvoiceSource.starGift(
-                    hideName: hideName,
-                    includeUpgrade: includeUpgrade,
-                    peerId: PeerId(rawPeer),
-                    giftId: giftId,
-                    text: text.isEmpty ? nil : text,
-                    entities: nil
-                )
-                let semaphore = DispatchSemaphore(value: 0)
-                var out: [String: KuniPyValue] = ["ok": .bool(false)]
-                let _ = (context.engine.payments.fetchBotPaymentForm(source: source, themeParams: nil)
-                |> mapToSignal { form -> Signal<SendBotPaymentResult, SendBotPaymentFormError> in
-                    return context.engine.payments.sendStarsPaymentForm(formId: form.id, source: source)
-                }
-                |> take(1)).startStandalone(next: { _ in
-                    out = ["ok": .bool(true), "gift_id": .int(giftId), "peer_id": .int(rawPeer)]
-                    semaphore.signal()
-                }, error: { err in
-                    out = ["ok": .bool(false), "error": .string(String(describing: err))]
-                    semaphore.signal()
-                })
-                _ = semaphore.wait(timeout: .now() + 15.0)
-                self.logHandler("tg.send_star_gift -> gift \(giftId) to \(rawPeer)")
-                return .dict(out)
-            },
-            "buy_star_gift": .nativeFunction { [weak self] args, kwargs in
+            _ = semaphore.wait(timeout: .now() + 5.0)
+            return .list(result)
+        }
+
+        methods["send_star_gift"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .dict(["ok": .bool(false), "error": .string("No context")]) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                  let giftId = kwargs["gift_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                return .dict(["ok": .bool(false), "error": .string("peer_id and gift_id required")])
+            }
+            let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
+            let hideName = (kwargs["hide_name"] ?? (args.count > 3 ? args[3] : .bool(false))).isTruthy
+            let includeUpgrade = (kwargs["upgrade"] ?? .bool(false)).isTruthy
+            let source = BotPaymentInvoiceSource.starGift(
+                hideName: hideName,
+                includeUpgrade: includeUpgrade,
+                peerId: PeerId(rawPeer),
+                giftId: giftId,
+                text: text.isEmpty ? nil : text,
+                entities: nil
+            )
+            let semaphore = DispatchSemaphore(value: 0)
+            var out: [String: KuniPyValue] = ["ok": .bool(false)]
+            let _ = (context.engine.payments.fetchBotPaymentForm(source: source, themeParams: nil)
+            |> mapError { _ -> SendBotPaymentFormError in
+                return .generic
+            }
+            |> mapToSignal { form -> Signal<SendBotPaymentResult, SendBotPaymentFormError> in
+                return context.engine.payments.sendStarsPaymentForm(formId: form.id, source: source)
+            }
+            |> take(1)).startStandalone(next: { _ in
+                out = ["ok": .bool(true), "gift_id": .int(giftId), "peer_id": .int(rawPeer)]
+                semaphore.signal()
+            }, error: { err in
+                out = ["ok": .bool(false), "error": .string(String(describing: err))]
+                semaphore.signal()
+            })
+            _ = semaphore.wait(timeout: .now() + 15.0)
+            self.logHandler("tg.send_star_gift -> gift \(giftId) to \(rawPeer)")
+            return .dict(out)
+        }
+
+        methods["buy_star_gift"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .dict(["ok": .bool(false)]) }
                 guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
                     return .dict(["ok": .bool(false), "error": .string("peer_id required")])
@@ -399,10 +426,11 @@ public final class KuniGramPluginAPI {
                     semaphore.signal()
                 })
                 _ = semaphore.wait(timeout: .now() + 15.0)
-                self.logHandler("tg.buy_star_gift -> \(slug) to \(rawPeer)")
-                return .dict(out)
-            },
-            "transfer_star_gift": .nativeFunction { [weak self] args, kwargs in
+            self.logHandler("tg.buy_star_gift -> \(slug) to \(rawPeer)")
+            return .dict(out)
+        }
+
+        methods["transfer_star_gift"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .bool(false) }
                 guard let rawFromPeer = kwargs["from_peer"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
                       let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil),
@@ -411,10 +439,11 @@ public final class KuniGramPluginAPI {
                 }
                 let reference = StarGiftReference.message(messageId: MessageId(peerId: PeerId(rawFromPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId)))
                 let _ = context.engine.payments.transferStarGift(prepaid: false, reference: reference, peerId: PeerId(rawToPeer)).startStandalone()
-                self.logHandler("tg.transfer_star_gift -> \(msgId) to \(rawToPeer)")
-                return .bool(true)
-            },
-            "convert_star_gift": .nativeFunction { [weak self] args, kwargs in
+            self.logHandler("tg.transfer_star_gift -> \(msgId) to \(rawToPeer)")
+            return .bool(true)
+        }
+
+        methods["convert_star_gift"] = .nativeFunction { [weak self] args, kwargs in
                 guard let self = self, let context = self.context else { return .bool(false) }
                 guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
                       let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
@@ -422,48 +451,52 @@ public final class KuniGramPluginAPI {
                 }
                 let reference = StarGiftReference.message(messageId: MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId)))
                 let _ = context.engine.payments.convertStarGift(reference: reference).startStandalone()
-                self.logHandler("tg.convert_star_gift -> \(msgId)")
-                return .bool(true)
-            },
-            "pin_message": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
-                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
-                    return .bool(false)
-                }
-                let silent = !(kwargs["notify"] ?? .bool(false)).isTruthy
-                let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
-                let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), id: id, update: .pin(silent: silent, forOneSide: false)).startStandalone()
-                self.logHandler("tg.pin_message -> \(msgId)")
-                return .bool(true)
-            },
-            "unpin_message": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
-                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
-                    return .bool(false)
-                }
-                let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
-                let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), id: id, update: .clear).startStandalone()
-                self.logHandler("tg.unpin_message -> \(msgId)")
-                return .bool(true)
-            },
-            "set_bio": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                let bio = kwargs["bio"]?.stringValue ?? args.first?.stringValue ?? ""
-                let _ = context.engine.accountData.updateAbout(about: bio).startStandalone()
-                self.logHandler("tg.set_bio")
-                return .bool(true)
-            },
-            "set_name": .nativeFunction { [weak self] args, kwargs in
-                guard let self = self, let context = self.context else { return .bool(false) }
-                let first = kwargs["first_name"]?.stringValue ?? (args.count > 0 ? args[0].stringValue : "")
-                let last = kwargs["last_name"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
-                let _ = context.engine.accountData.updateAccountPeerName(firstName: first, lastName: last).startStandalone()
-                self.logHandler("tg.set_name -> \(first) \(last)")
-                return .bool(true)
+            self.logHandler("tg.convert_star_gift -> \(msgId)")
+            return .bool(true)
+        }
+
+        methods["pin_message"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                  let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                return .bool(false)
             }
-        ]
+            let silent = !(kwargs["notify"] ?? .bool(false)).isTruthy
+            let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
+            let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), update: .pin(id: id, silent: silent, forThisPeerOnlyIfPossible: false)).startStandalone()
+            self.logHandler("tg.pin_message -> \(msgId)")
+            return .bool(true)
+        }
+
+        methods["unpin_message"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                  let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                return .bool(false)
+            }
+            let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
+            let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), update: .clear(id: id)).startStandalone()
+            self.logHandler("tg.unpin_message -> \(msgId)")
+            return .bool(true)
+        }
+
+        methods["set_bio"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            let bio = kwargs["bio"]?.stringValue ?? args.first?.stringValue ?? ""
+            let _ = context.engine.accountData.updateAbout(about: bio).startStandalone()
+            self.logHandler("tg.set_bio")
+            return .bool(true)
+        }
+
+        methods["set_name"] = .nativeFunction { [weak self] args, kwargs in
+            guard let self = self, let context = self.context else { return .bool(false) }
+            let first = kwargs["first_name"]?.stringValue ?? (args.count > 0 ? args[0].stringValue : "")
+            let last = kwargs["last_name"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
+            let _ = context.engine.accountData.updateAccountPeerName(firstName: first, lastName: last).startStandalone()
+            self.logHandler("tg.set_name -> \(first) \(last)")
+            return .bool(true)
+        }
+
         return .object(methods)
     }
 

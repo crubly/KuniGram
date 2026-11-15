@@ -244,7 +244,7 @@ public func kuniGramPluginDetailController(context: AccountContext, pluginId: St
         _ = observer
     }
     dismissImpl = { [weak controller] in
-        (controller?.navigationController as? NavigationController)?.popViewController(animated: true)
+        _ = (controller?.navigationController as? NavigationController)?.popViewController(animated: true)
     }
     presentImpl = { [weak controller] c in
         controller?.present(c, in: .window(.root))
