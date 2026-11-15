@@ -31,6 +31,8 @@
         <li><a href="#api-tg" data-ru="Telegram API (Сообщения и чаты)" data-en="Telegram API (Messages & Chats)">Telegram API (Сообщения и чаты)</a></li>
         <li><a href="#api-net" data-ru="Сеть и WebSocket" data-en="Network & WebSocket">Сеть и WebSocket</a></li>
         <li><a href="#api-camera" data-ru="Камера и Медиа" data-en="Camera & Media">Камера и Медиа</a></li>
+        <li><a href="#api-device" data-ru="Устройство и Файлы" data-en="Device & Filesystem">Устройство и Файлы</a></li>
+        <li><a href="#api-local" data-ru="Локальные Подарки и Wallet" data-en="Local Gifts & Wallet">Локальные Подарки и Wallet</a></li>
         <li><a href="#api-ui" data-ru="UI, Логи и Хранилище" data-en="UI, Logs & Storage">UI, Логи и Хранилище</a></li>
         <li><a href="#stdlib" data-ru="Встроенный Python" data-en="Built-in Python">Встроенный Python</a></li>
         <li><a href="#examples" data-ru="Примеры плагинов" data-en="Plugin Examples">Примеры плагинов</a></li>
@@ -242,6 +244,10 @@ for g in gifts:
             <tr><td><code>tg.send_file(peer_id, path, caption="")</code></td><td data-ru="Отправить любой документ/файл" data-en="Send any file">Отправить любой документ/файл</td></tr>
             <tr><td><code>tg.send_reaction(peer_id, message_id, emoji)</code></td><td data-ru="Поставить emoji-реакцию на сообщение" data-en="React to a message">Поставить emoji-реакцию на сообщение</td></tr>
             <tr><td><code>tg.set_typing(peer_id)</code></td><td data-ru="Отправить статус «печатает...» в чат" data-en="Send typing action">Отправить статус «печатает...» в чат</td></tr>
+            <tr><td><code>tg.pin_message(peer_id, message_id, notify=False)</code></td><td data-ru="Закрепить сообщение в чате" data-en="Pin a message">Закрепить сообщение в чате</td></tr>
+            <tr><td><code>tg.unpin_message(peer_id, message_id)</code></td><td data-ru="Открепить сообщение" data-en="Unpin a message">Открепить сообщение</td></tr>
+            <tr><td><code>tg.set_bio(bio)</code></td><td data-ru="Изменить раздел «О себе» в профиле" data-en="Update profile bio">Изменить раздел «О себе» в профиле</td></tr>
+            <tr><td><code>tg.set_name(first_name, last_name="")</code></td><td data-ru="Изменить имя и фамилию аккаунта" data-en="Update account name">Изменить имя и фамилию аккаунта</td></tr>
           </tbody>
         </table>
       </section>
@@ -283,6 +289,46 @@ for g in gifts:
             <tr><td><code>api.camera.take_photo(camera="back")</code></td><td data-ru="Делает снимок с 'back' или 'front' камеры. Возвращает {'path': str, 'width': int, 'height': int, 'base64': str}." data-en="Takes photo with back/front camera">Делает снимок с <code>"back"</code> или <code>"front"</code> камеры. Возвращает <code>{"path", "width", "height", "base64"}</code>.</td></tr>
             <tr><td><code>api.media.save_to_gallery(path)</code></td><td data-ru="Сохраняет изображение по path в Фотоплёнку iPhone." data-en="Saves image to iOS Photos">Сохраняет изображение по <code>path</code> в Фотоплёнку iPhone.</td></tr>
             <tr><td><code>api.media.resize_image(path, width, height)</code></td><td data-ru="Изменяет размер изображения и возвращает путь к новому JPEG-файлу." data-en="Resizes image and returns new path">Изменяет размер изображения и возвращает путь к новому JPEG-файлу.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="api-device">
+        <h2 data-ru="Устройство, Буфер обмена и Файлы (api.device / api.fs)" data-en="Device, Clipboard & Filesystem (api.device / api.fs)">Устройство, Буфер обмена и Файлы (<code>api.device</code> / <code>api.fs</code>)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>api.device.vibrate()</code></td><td data-ru="Тактильная вибрация (Haptic Feedback)" data-en="Trigger haptic feedback">Тактильная вибрация (Haptic Feedback)</td></tr>
+            <tr><td><code>api.device.clipboard_get() / clipboard_set(text)</code></td><td data-ru="Чтение и запись буфера обмена iPhone" data-en="Read/write iOS clipboard">Чтение и запись буфера обмена iPhone</td></tr>
+            <tr><td><code>api.device.info()</code></td><td data-ru="Возвращает {'model', 'ios_version', 'battery'}" data-en="Returns {'model', 'ios_version', 'battery'}">Возвращает <code>{"model", "ios_version", "battery"}</code></td></tr>
+            <tr><td><code>api.fs.write(name, text) / read(name)</code></td><td data-ru="Запись и чтение файлов в Documents/KuniGram/Files/" data-en="Read/write sandboxed files">Запись и чтение файлов в <code>Documents/KuniGram/Files/</code></td></tr>
+            <tr><td><code>api.fs.exists(name) / list()</code></td><td data-ru="Проверка существования и список файлов" data-en="Check existence / list files">Проверка существования и список файлов</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="api-local">
+        <h2 data-ru="Локальные NFT-подарки и Gram Wallet (api.local_gifts / api.gram_wallet)" data-en="Local NFT Gifts & Gram Wallet">Локальные NFT-подарки и Gram Wallet (<code>api.local_gifts</code> / <code>api.gram_wallet</code>)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>api.local_gifts.list()</code></td><td data-ru="Список всех локальных NFT-подарков" data-en="List all local NFT gifts">Список всех локальных NFT-подарков</td></tr>
+            <tr><td><code>api.local_gifts.add(slug)</code></td><td data-ru="Добавить подарок по слагу (например 'PlushPepe-13')" data-en="Add local gift by slug">Добавить подарок по слагу (например <code>"PlushPepe-13"</code>)</td></tr>
+            <tr><td><code>api.local_gifts.send_to_wallet(id)</code></td><td data-ru="Отправить локальный подарок на Gram Wallet" data-en="Send local gift to Gram Wallet">Отправить локальный подарок на Gram Wallet</td></tr>
+            <tr><td><code>api.local_gifts.craft(id1, id2)</code></td><td data-ru="Скрафтить новый подарок из двух" data-en="Craft 2 gifts into one">Скрафтить новый подарок из двух</td></tr>
+            <tr><td><code>api.gram_wallet.get_balance() / set_balance(ton)</code></td><td data-ru="Получить или изменить баланс TON в Gram Wallet" data-en="Get/set Gram Wallet TON balance">Получить или изменить баланс TON в Gram Wallet</td></tr>
+            <tr><td><code>api.gram_wallet.set_enabled(bool)</code></td><td data-ru="Включить/выключить Gram Wallet в Настройках" data-en="Toggle Gram Wallet in Settings">Включить/выключить Gram Wallet в Настройках</td></tr>
+            <tr><td><code>api.gram_wallet.add_tonviewer_nft(url)</code></td><td data-ru="Выдать NFT на кошелёк по ссылке tonviewer.com" data-en="Add NFT from Tonviewer URL">Выдать NFT на кошелёк по ссылке <code>tonviewer.com</code></td></tr>
           </tbody>
         </table>
       </section>

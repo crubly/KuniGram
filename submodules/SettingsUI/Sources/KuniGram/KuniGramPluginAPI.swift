@@ -43,6 +43,10 @@ public final class KuniGramPluginAPI {
             "media": self.buildMediaModule(),
             "ui": self.buildUIModule(),
             "storage": self.buildStorageModule(),
+            "device": self.buildDeviceModule(),
+            "fs": self.buildFSModule(),
+            "local_gifts": self.buildLocalGiftsModule(),
+            "gram_wallet": self.buildGramWalletModule(),
             "log": .nativeFunction { [weak self] args, _ in
                 let msg = args.map { $0.stringValue }.joined(separator: " ")
                 self?.logHandler(msg)
@@ -420,6 +424,44 @@ public final class KuniGramPluginAPI {
                 let _ = context.engine.payments.convertStarGift(reference: reference).startStandalone()
                 self.logHandler("tg.convert_star_gift -> \(msgId)")
                 return .bool(true)
+            },
+            "pin_message": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                    return .bool(false)
+                }
+                let silent = !(kwargs["notify"] ?? .bool(false)).isTruthy
+                let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
+                let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), id: id, update: .pin(silent: silent, forOneSide: false)).startStandalone()
+                self.logHandler("tg.pin_message -> \(msgId)")
+                return .bool(true)
+            },
+            "unpin_message": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                    return .bool(false)
+                }
+                let id = MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId))
+                let _ = context.engine.messages.requestUpdatePinnedMessage(peerId: PeerId(rawPeer), id: id, update: .clear).startStandalone()
+                self.logHandler("tg.unpin_message -> \(msgId)")
+                return .bool(true)
+            },
+            "set_bio": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                let bio = kwargs["bio"]?.stringValue ?? args.first?.stringValue ?? ""
+                let _ = context.engine.accountData.updateAbout(about: bio).startStandalone()
+                self.logHandler("tg.set_bio")
+                return .bool(true)
+            },
+            "set_name": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                let first = kwargs["first_name"]?.stringValue ?? (args.count > 0 ? args[0].stringValue : "")
+                let last = kwargs["last_name"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
+                let _ = context.engine.accountData.updateAccountPeerName(firstName: first, lastName: last).startStandalone()
+                self.logHandler("tg.set_name -> \(first) \(last)")
+                return .bool(true)
             }
         ])
     }
@@ -723,6 +765,168 @@ public final class KuniGramPluginAPI {
         if let data = try? JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted]) {
             try? data.write(to: self.storageURL)
         }
+    }
+
+    // MARK: - Device & Clipboard API (`api.device`)
+
+    public func buildDeviceModule() -> KuniPyValue {
+        return .object([
+            "vibrate": .nativeFunction { _, _ in
+                DispatchQueue.main.async {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                }
+                return .bool(true)
+            },
+            "clipboard_get": .nativeFunction { _, _ in
+                var text = ""
+                if Thread.isMainThread {
+                    text = UIPasteboard.general.string ?? ""
+                } else {
+                    DispatchQueue.main.sync {
+                        text = UIPasteboard.general.string ?? ""
+                    }
+                }
+                return .string(text)
+            },
+            "clipboard_set": .nativeFunction { args, _ in
+                let text = args.first?.stringValue ?? ""
+                DispatchQueue.main.async {
+                    UIPasteboard.general.string = text
+                }
+                return .bool(true)
+            },
+            "info": .nativeFunction { _, _ in
+                var model = "iPhone"
+                var sysVer = ""
+                var battery: Float = -1
+                DispatchQueue.main.sync {
+                    UIDevice.current.isBatteryMonitoringEnabled = true
+                    model = UIDevice.current.model
+                    sysVer = UIDevice.current.systemVersion
+                    battery = UIDevice.current.batteryLevel
+                }
+                return .dict([
+                    "model": .string(model),
+                    "ios_version": .string(sysVer),
+                    "battery": .double(Double(battery))
+                ])
+            }
+        ])
+    }
+
+    // MARK: - Sandboxed Filesystem API (`api.fs`)
+
+    public func buildFSModule() -> KuniPyValue {
+        let filesDir = self.mediaDirURL.deletingLastPathComponent().appendingPathComponent("Files", isDirectory: true)
+        try? FileManager.default.createDirectory(at: filesDir, withIntermediateDirectories: true)
+
+        return .object([
+            "write": .nativeFunction { args, _ in
+                guard args.count >= 2 else { return .bool(false) }
+                let name = args[0].stringValue.replacingOccurrences(of: "/", with: "_")
+                let content = args[1].stringValue
+                let url = filesDir.appendingPathComponent(name)
+                try? content.write(to: url, atomically: true, encoding: .utf8)
+                return .string(url.path)
+            },
+            "read": .nativeFunction { args, _ in
+                guard let raw = args.first?.stringValue else { return .none }
+                let url = raw.hasPrefix("/") ? URL(fileURLWithPath: raw) : filesDir.appendingPathComponent(raw.replacingOccurrences(of: "/", with: "_"))
+                if let text = try? String(contentsOf: url, encoding: .utf8) {
+                    return .string(text)
+                }
+                return .none
+            },
+            "exists": .nativeFunction { args, _ in
+                guard let raw = args.first?.stringValue else { return .bool(false) }
+                let url = raw.hasPrefix("/") ? URL(fileURLWithPath: raw) : filesDir.appendingPathComponent(raw.replacingOccurrences(of: "/", with: "_"))
+                return .bool(FileManager.default.fileExists(atPath: url.path))
+            },
+            "list": .nativeFunction { _, _ in
+                let items = (try? FileManager.default.contentsOfDirectory(atPath: filesDir.path)) ?? []
+                return .list(items.map { .string($0) })
+            }
+        ])
+    }
+
+    // MARK: - Local NFT Gifts API (`api.local_gifts`)
+
+    public func buildLocalGiftsModule() -> KuniPyValue {
+        return .object([
+            "list": .nativeFunction { _, _ in
+                let items = KuniGramLocalGiftStore.shared.gifts.map { g -> KuniPyValue in
+                    return .dict([
+                        "id": .string(g.id),
+                        "slug": .string(g.slug),
+                        "title": .string(g.title),
+                        "number": .int(Int64(g.number)),
+                        "model": .string(g.modelName),
+                        "backdrop": .string(g.backdropName),
+                        "symbol": .string(g.symbolName),
+                        "in_wallet": .bool(g.inGramWallet)
+                    ])
+                }
+                return .list(items)
+            },
+            "add": .nativeFunction { [weak self] args, _ in
+                guard let self = self, let context = self.context, let slug = args.first?.stringValue else { return .none }
+                let semaphore = DispatchSemaphore(value: 0)
+                var out: KuniPyValue = .none
+                KuniGramLocalGiftStore.shared.addGiftBySlug(slug, context: context) { gift in
+                    out = .dict(["id": .string(gift.id), "slug": .string(gift.slug), "title": .string(gift.title)])
+                    semaphore.signal()
+                }
+                _ = semaphore.wait(timeout: .now() + 8.0)
+                return out
+            },
+            "send_to_wallet": .nativeFunction { args, _ in
+                guard let id = args.first?.stringValue else { return .bool(false) }
+                KuniGramLocalGiftStore.shared.sendGiftToGramWallet(id: id)
+                return .bool(true)
+            },
+            "craft": .nativeFunction { args, _ in
+                let ids = args.map { $0.stringValue }
+                if let crafted = KuniGramLocalGiftStore.shared.craftGift(from: ids) {
+                    return .dict(["id": .string(crafted.id), "title": .string(crafted.title)])
+                }
+                return .none
+            }
+        ])
+    }
+
+    // MARK: - Gram Wallet API (`api.gram_wallet`)
+
+    public func buildGramWalletModule() -> KuniPyValue {
+        return .object([
+            "get_balance": .nativeFunction { _, _ in
+                return .double(KuniGramLocalGiftStore.shared.gramWalletBalanceTON)
+            },
+            "set_balance": .nativeFunction { args, _ in
+                if let val = args.first?.doubleValue {
+                    KuniGramLocalGiftStore.shared.gramWalletBalanceTON = max(0.0, val)
+                    return .bool(true)
+                }
+                return .bool(false)
+            },
+            "set_enabled": .nativeFunction { args, _ in
+                KuniGramLocalGiftStore.shared.isGramWalletEnabled = args.first?.isTruthy ?? true
+                return .bool(true)
+            },
+            "add_tonviewer_nft": .nativeFunction { args, _ in
+                guard let url = args.first?.stringValue else { return .none }
+                let semaphore = DispatchSemaphore(value: 0)
+                var out: KuniPyValue = .none
+                KuniGramLocalGiftStore.shared.addWalletNFT(fromTonviewerLink: url) { nft in
+                    if let nft = nft {
+                        out = .dict(["name": .string(nft.name), "address": .string(nft.address), "collection": .string(nft.collectionName)])
+                    }
+                    semaphore.signal()
+                }
+                _ = semaphore.wait(timeout: .now() + 8.0)
+                return out
+            }
+        ])
     }
 }
 
