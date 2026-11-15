@@ -300,6 +300,126 @@ public final class KuniGramPluginAPI {
                 })
                 _ = semaphore.wait(timeout: .now() + 5.0)
                 return .list(result)
+            },
+            "get_star_gifts": .nativeFunction { [weak self] _, _ in
+                guard let self = self, let context = self.context else { return .list([]) }
+                let _ = context.engine.payments.keepStarGiftsUpdated().startStandalone()
+                let semaphore = DispatchSemaphore(value: 0)
+                var result: [KuniPyValue] = []
+                let _ = (context.engine.payments.cachedStarGifts()
+                |> take(1)).startStandalone(next: { gifts in
+                    if let gifts = gifts {
+                        for gift in gifts {
+                            switch gift {
+                            case let .generic(g):
+                                result.append(.dict([
+                                    "id": .int(g.id),
+                                    "price": .int(g.price),
+                                    "convert_stars": .int(g.convertStars),
+                                    "is_limited": .bool(g.availability != nil),
+                                    "remains": .int(Int64(g.availability?.remains ?? -1)),
+                                    "total": .int(Int64(g.availability?.total ?? -1))
+                                ]))
+                            case let .unique(u):
+                                result.append(.dict([
+                                    "id": .int(u.id),
+                                    "slug": .string(u.slug),
+                                    "title": .string(u.title),
+                                    "number": .int(Int64(u.number)),
+                                    "is_unique": .bool(true)
+                                ]))
+                            }
+                        }
+                    }
+                    semaphore.signal()
+                })
+                _ = semaphore.wait(timeout: .now() + 5.0)
+                return .list(result)
+            },
+            "send_star_gift": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .dict(["ok": .bool(false), "error": .string("No context")]) }
+                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                      let giftId = kwargs["gift_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                    return .dict(["ok": .bool(false), "error": .string("peer_id and gift_id required")])
+                }
+                let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
+                let hideName = (kwargs["hide_name"] ?? (args.count > 3 ? args[3] : .bool(false))).isTruthy
+                let includeUpgrade = (kwargs["upgrade"] ?? .bool(false)).isTruthy
+                let source = BotPaymentInvoiceSource.starGift(
+                    hideName: hideName,
+                    includeUpgrade: includeUpgrade,
+                    peerId: PeerId(rawPeer),
+                    giftId: giftId,
+                    text: text.isEmpty ? nil : text,
+                    entities: nil
+                )
+                let semaphore = DispatchSemaphore(value: 0)
+                var out: [String: KuniPyValue] = ["ok": .bool(false)]
+                let _ = (context.engine.payments.fetchBotPaymentForm(source: source, themeParams: nil)
+                |> mapToSignal { form -> Signal<SendBotPaymentResult, SendBotPaymentFormError> in
+                    return context.engine.payments.sendStarsPaymentForm(formId: form.id, source: source)
+                }
+                |> take(1)).startStandalone(next: { _ in
+                    out = ["ok": .bool(true), "gift_id": .int(giftId), "peer_id": .int(rawPeer)]
+                    semaphore.signal()
+                }, error: { err in
+                    out = ["ok": .bool(false), "error": .string(String(describing: err))]
+                    semaphore.signal()
+                })
+                _ = semaphore.wait(timeout: .now() + 15.0)
+                self.logHandler("tg.send_star_gift -> gift \(giftId) to \(rawPeer)")
+                return .dict(out)
+            },
+            "buy_star_gift": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .dict(["ok": .bool(false)]) }
+                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil) else {
+                    return .dict(["ok": .bool(false), "error": .string("peer_id required")])
+                }
+                let slug = kwargs["slug"]?.stringValue ?? (args.count > 1 ? args[1].stringValue : "")
+                let text = kwargs["text"]?.stringValue ?? (args.count > 2 ? args[2].stringValue : "")
+                let hideName = (kwargs["hide_name"] ?? .bool(true)).isTruthy
+                let semaphore = DispatchSemaphore(value: 0)
+                var out: [String: KuniPyValue] = ["ok": .bool(false)]
+                let _ = (context.engine.payments.buyStarGift(
+                    slug: slug,
+                    peerId: PeerId(rawPeer),
+                    price: nil,
+                    hideName: hideName,
+                    text: text.isEmpty ? nil : text,
+                    entities: nil
+                ) |> take(1)).startStandalone(error: { err in
+                    out = ["ok": .bool(false), "error": .string(String(describing: err))]
+                    semaphore.signal()
+                }, completed: {
+                    out = ["ok": .bool(true), "slug": .string(slug), "peer_id": .int(rawPeer)]
+                    semaphore.signal()
+                })
+                _ = semaphore.wait(timeout: .now() + 15.0)
+                self.logHandler("tg.buy_star_gift -> \(slug) to \(rawPeer)")
+                return .dict(out)
+            },
+            "transfer_star_gift": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                guard let rawFromPeer = kwargs["from_peer"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil),
+                      let rawToPeer = kwargs["to_peer"]?.intValue ?? (args.count > 2 ? args[2].intValue : nil) else {
+                    return .bool(false)
+                }
+                let reference = StarGiftReference.message(messageId: MessageId(peerId: PeerId(rawFromPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId)))
+                let _ = context.engine.payments.transferStarGift(prepaid: false, reference: reference, peerId: PeerId(rawToPeer)).startStandalone()
+                self.logHandler("tg.transfer_star_gift -> \(msgId) to \(rawToPeer)")
+                return .bool(true)
+            },
+            "convert_star_gift": .nativeFunction { [weak self] args, kwargs in
+                guard let self = self, let context = self.context else { return .bool(false) }
+                guard let rawPeer = kwargs["peer_id"]?.intValue ?? (args.count > 0 ? args[0].intValue : nil),
+                      let msgId = kwargs["message_id"]?.intValue ?? (args.count > 1 ? args[1].intValue : nil) else {
+                    return .bool(false)
+                }
+                let reference = StarGiftReference.message(messageId: MessageId(peerId: PeerId(rawPeer), namespace: Namespaces.Message.Cloud, id: Int32(msgId)))
+                let _ = context.engine.payments.convertStarGift(reference: reference).startStandalone()
+                self.logHandler("tg.convert_star_gift -> \(msgId)")
+                return .bool(true)
             }
         ])
     }

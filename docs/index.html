@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KuniGram iOS — Документация Plugins Engine</title>
+  <title>KuniGram iOS — Полная документация Plugins Engine</title>
   <link rel="icon" type="image/png" href="assets/kunigram-icon.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -14,6 +14,7 @@
       <span>KuniGram Docs</span>
     </a>
     <div class="topbar-actions">
+      <a href="https://github.com/crubly/KuniGram" target="_blank" style="font-size:0.9rem;font-weight:600;">GitHub</a>
       <button id="lang-toggle" class="lang-btn">EN</button>
     </div>
   </header>
@@ -24,11 +25,14 @@
       <ul>
         <li><a href="#overview" data-ru="Обзор" data-en="Overview">Обзор</a></li>
         <li><a href="#quickstart" data-ru="Быстрый старт" data-en="Quick Start">Быстрый старт</a></li>
+        <li><a href="#metadata" data-ru="Метаданные плагина" data-en="Plugin Metadata">Метаданные плагина</a></li>
         <li><a href="#hooks" data-ru="События (Hooks)" data-en="Event Hooks">События (Hooks)</a></li>
-        <li><a href="#api-tg" data-ru="Telegram API (api.tg)" data-en="Telegram API (api.tg)">Telegram API (api.tg)</a></li>
+        <li><a href="#api-gifts" data-ru="Подарки (Star Gifts)" data-en="Star Gifts API">Подарки (Star Gifts)</a></li>
+        <li><a href="#api-tg" data-ru="Telegram API (Сообщения и чаты)" data-en="Telegram API (Messages & Chats)">Telegram API (Сообщения и чаты)</a></li>
         <li><a href="#api-net" data-ru="Сеть и WebSocket" data-en="Network & WebSocket">Сеть и WebSocket</a></li>
         <li><a href="#api-camera" data-ru="Камера и Медиа" data-en="Camera & Media">Камера и Медиа</a></li>
-        <li><a href="#api-ui" data-ru="UI и Хранилище" data-en="UI & Storage">UI и Хранилище</a></li>
+        <li><a href="#api-ui" data-ru="UI, Логи и Хранилище" data-en="UI, Logs & Storage">UI, Логи и Хранилище</a></li>
+        <li><a href="#stdlib" data-ru="Встроенный Python" data-en="Built-in Python">Встроенный Python</a></li>
         <li><a href="#examples" data-ru="Примеры плагинов" data-en="Plugin Examples">Примеры плагинов</a></li>
         <li><a href="#disguise" data-ru="Маскировка под Telegram" data-en="Telegram Disguise">Маскировка под Telegram</a></li>
       </ul>
@@ -38,11 +42,11 @@
       <div class="hero">
         <img src="assets/kunigram-icon.png" alt="KuniGram Peach Icon" />
         <div>
-          <span class="badge">KuniGram iOS • Python Plugins Engine</span>
-          <h1 data-ru="Документация KuniGram" data-en="KuniGram Documentation">Документация KuniGram</h1>
-          <p data-ru="Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, полным доступом к Telegram API, внешним серверам, камере и режимом маскировки."
-             data-en="Custom Telegram-iOS client with a built-in Python Plugins Engine, full Telegram API bridge, external HTTP/WebSocket networking, camera capture, and Telegram disguise mode.">
-            Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, полным доступом к Telegram API, внешним серверам, камере и режимом маскировки.
+          <span class="badge">KuniGram iOS • Python Plugins Engine v1.0</span>
+          <h1 data-ru="Полная документация KuniGram" data-en="KuniGram Full Documentation">Полная документация KuniGram</h1>
+          <p data-ru="Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, отправкой Star Gifts и коллекционных подарков, полным Telegram API, внешними HTTP/WebSocket-запросами, камерой и маскировкой под Telegram."
+             data-en="Custom Telegram-iOS client with an embedded Python Plugins Engine, Star Gifts & collectibles API, full Telegram API bridge, external HTTP/WebSocket networking, camera capture, and Telegram disguise mode.">
+            Кастомный iOS-клиент на базе Telegram-iOS со встроенным ядром Python-плагинов, отправкой Star Gifts и коллекционных подарков, полным Telegram API, внешними HTTP/WebSocket-запросами, камерой и маскировкой под Telegram.
           </p>
         </div>
       </div>
@@ -52,30 +56,30 @@
         <div class="grid-2">
           <div class="card">
             <h4 data-ru="Ядро Плагинов (Python)" data-en="Python Plugins Engine">Ядро Плагинов (Python)</h4>
-            <p data-ru="Загружайте .py файлы из Файлов или буфера обмена, включайте/выключайте переключателем, смотрите логи и удаляйте в один тап."
-               data-en="Import .py files from Files or clipboard, toggle plugins on/off, inspect live execution logs, and delete anytime.">
-              Загружайте .py файлы из Файлов или буфера обмена, включайте/выключайте переключателем, смотрите логи и удаляйте в один тап.
+            <p data-ru="Импортируйте .py файлы из Файлов или вставляйте код из буфера обмена. Включайте/выключайте переключателем, смотрите логи и удаляйте в один тап."
+               data-en="Import .py files from Files or paste from clipboard. Toggle plugins on/off with a switch, inspect live logs, and delete anytime.">
+              Импортируйте .py файлы из Файлов или вставляйте код из буфера обмена. Включайте/выключайте переключателем, смотрите логи и удаляйте в один тап.
             </p>
           </div>
           <div class="card">
-            <h4 data-ru="Полный Telegram API" data-en="Full Telegram API">Полный Telegram API</h4>
-            <p data-ru="Отправка, редактирование, удаление, пересылка сообщений, реакции, фото, файлы, получение чатов и профиля."
-               data-en="Send, edit, delete, forward messages, send reactions, photos, files, fetch chats and user profiles.">
-              Отправка, редактирование, удаление, пересылка сообщений, реакции, фото, файлы, получение чатов и профиля.
+            <h4 data-ru="Подарки и Telegram API" data-en="Gifts & Telegram API">Подарки и Telegram API</h4>
+            <p data-ru="Получение каталога подарков, отправка обычных и коллекционных Star Gifts, пересылка, конвертация в звёзды, сообщения, фото, файлы и реакции."
+               data-en="Fetch Star Gifts catalog, send regular or collectible gifts, transfer, convert to stars, send/edit/delete messages, photos, files, and reactions.">
+              Получение каталога подарков, отправка обычных и коллекционных Star Gifts, пересылка, конвертация в звёзды, сообщения, фото, файлы и реакции.
             </p>
           </div>
           <div class="card">
             <h4 data-ru="Внешние серверы и WebSocket" data-en="External Servers & WebSocket">Внешние серверы и WebSocket</h4>
-            <p data-ru="Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений."
-               data-en="Built-in api.net and requests modules for HTTP GET/POST/PUT/DELETE and persistent WebSocket connections.">
-              Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений.
+            <p data-ru="Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений к любым вашим серверам."
+               data-en="Built-in api.net and requests modules for HTTP GET/POST/PUT/DELETE and persistent WebSocket connections to any external server.">
+              Встроенные модули api.net и requests для HTTP GET/POST/PUT/DELETE и постоянных WebSocket-подключений к любым вашим серверам.
             </p>
           </div>
           <div class="card">
             <h4 data-ru="Камера, Медиа и Маскировка" data-en="Camera, Media & Disguise">Камера, Медиа и Маскировка</h4>
-            <p data-ru="Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram."
-               data-en="Capture photos via api.camera.take_photo(), resize images, save to gallery, and switch app icon to Telegram.">
-              Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram.
+            <p data-ru="Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram в Дополнительных настройках."
+               data-en="Capture photos via api.camera.take_photo(), resize images, save to gallery, and switch app icon to Telegram in Additional Settings.">
+              Съёмка фото через api.camera.take_photo(), ресайз, сохранение в галерею и переключение иконки под Telegram в Дополнительных настройках.
             </p>
           </div>
         </div>
@@ -83,9 +87,9 @@
 
       <section id="quickstart">
         <h2 data-ru="Быстрый старт" data-en="Quick Start">Быстрый старт</h2>
-        <p data-ru="Откройте Настройки → KuniGram → Ядро Плагинов. Каждый плагин — это обычный .py файл с метаданными в начале файла:"
-           data-en="Open Settings → KuniGram → Plugins Engine. Every plugin is a .py file with metadata headers at the top:">
-          Откройте Настройки → KuniGram → Ядро Плагинов. Каждый плагин — это обычный .py файл с метаданными в начале файла:
+        <p data-ru="Откройте Настройки → KuniGram → Ядро Плагинов. Нажмите «Загрузить плагин (.py)» или «Вставить плагин из буфера». После загрузки плагин сразу активируется и вызывает on_load(api)."
+           data-en="Open Settings → KuniGram → Plugins Engine. Tap Load Plugin (.py) or Paste Plugin from Clipboard. Once imported, the plugin activates immediately and calls on_load(api).">
+          Откройте <strong>Настройки → KuniGram → Ядро Плагинов</strong>. Нажмите «Загрузить плагин (.py)» или «Вставить плагин из буфера». После загрузки плагин сразу активируется и вызывает <code>on_load(api)</code>.
         </p>
         <div class="code-wrap">
           <button class="copy-btn">Copy</button>
@@ -105,6 +109,30 @@ def on_command(cmd, args, msg):
         </div>
       </section>
 
+      <section id="metadata">
+        <h2 data-ru="Метаданные плагина" data-en="Plugin Metadata">Метаданные плагина</h2>
+        <p data-ru="Указывайте метаданные в начале .py файла — они отображаются в списке плагинов и используются для хранения настроек:"
+           data-en="Declare metadata variables at the top of your .py file — they are shown in the plugin list and used for storage isolation:">
+          Указывайте метаданные в начале <code>.py</code> файла — они отображаются в списке плагинов и используются для хранения настроек:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Поле" data-en="Field">Поле</th>
+              <th data-ru="Обязательно" data-en="Required">Обязательно</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>__id__</code></td><td data-ru="Нет (по имени файла)" data-en="No (defaults to filename)">Нет</td><td data-ru="Уникальный идентификатор плагина и его JSON-хранилища" data-en="Unique ID for plugin state and JSON storage">Уникальный идентификатор плагина и его JSON-хранилища</td></tr>
+            <tr><td><code>__name__</code></td><td data-ru="Нет" data-en="No">Нет</td><td data-ru="Отображаемое имя в списке плагинов" data-en="Display name in the Plugins Engine list">Отображаемое имя в списке плагинов</td></tr>
+            <tr><td><code>__author__</code></td><td data-ru="Нет" data-en="No">Нет</td><td data-ru="Имя автора (отображается под названием)" data-en="Author name shown in subtitle">Имя автора (отображается под названием)</td></tr>
+            <tr><td><code>__version__</code></td><td data-ru="Нет" data-en="No">Нет</td><td data-ru="Версия плагина, например 1.2.0" data-en="Plugin version string, e.g. 1.2.0">Версия плагина, например <code>1.2.0</code></td></tr>
+            <tr><td><code>__description__</code></td><td data-ru="Нет" data-en="No">Нет</td><td data-ru="Краткое описание в карточке плагина" data-en="Short description shown on the detail screen">Краткое описание в карточке плагина</td></tr>
+          </tbody>
+        </table>
+      </section>
+
       <section id="hooks">
         <h2 data-ru="События (Hooks)" data-en="Event Hooks">События (Hooks)</h2>
         <table>
@@ -118,11 +146,79 @@ def on_command(cmd, args, msg):
           <tbody>
             <tr><td><code>on_load(api)</code></td><td><code>api</code></td><td data-ru="Вызывается при включении и загрузке плагина" data-en="Called when the plugin is enabled and loaded">Вызывается при включении и загрузке плагина</td></tr>
             <tr><td><code>on_unload()</code></td><td>—</td><td data-ru="Вызывается при выключении или удалении плагина" data-en="Called when the plugin is disabled or deleted">Вызывается при выключении или удалении плагина</td></tr>
-            <tr><td><code>on_message(msg)</code></td><td><code>dict</code></td><td data-ru="Входящее сообщение (peer_id, message_id, sender_id, text)" data-en="Incoming message dict">Входящее сообщение (peer_id, message_id, sender_id, text)</td></tr>
-            <tr><td><code>on_outgoing_message(msg)</code></td><td><code>dict</code></td><td data-ru="Исходящее сообщение" data-en="Outgoing message dict">Исходящее сообщение</td></tr>
-            <tr><td><code>on_command(cmd, args, msg)</code></td><td><code>str, str, dict</code></td><td data-ru="Команда вида .cmd args" data-en="Command starting with .cmd args">Команда вида <code>.cmd args</code></td></tr>
+            <tr><td><code>on_message(msg)</code></td><td><code>dict</code></td><td data-ru="Входящее сообщение: peer_id, message_id, sender_id, text, is_outgoing" data-en="Incoming message dict">Входящее сообщение: <code>peer_id</code>, <code>message_id</code>, <code>sender_id</code>, <code>text</code>, <code>is_outgoing</code></td></tr>
+            <tr><td><code>on_outgoing_message(msg)</code></td><td><code>dict</code></td><td data-ru="Исходящее сообщение текущего пользователя" data-en="Outgoing message dict">Исходящее сообщение текущего пользователя</td></tr>
+            <tr><td><code>on_command(cmd, args, msg)</code></td><td><code>str, str, dict</code></td><td data-ru="Команда вида .cmd args в любом чате" data-en="Command starting with .cmd args">Команда вида <code>.cmd args</code> в любом чате</td></tr>
           </tbody>
         </table>
+      </section>
+
+      <section id="api-gifts">
+        <h2 data-ru="Подарки Telegram (Star Gifts)" data-en="Telegram Star Gifts API">Подарки Telegram (<code>api.tg.*_star_gift*</code>)</h2>
+        <p data-ru="Полноценный API для работы с подарками Telegram: получение каталога, отправка обычных подарков за Stars, покупка коллекционных подарков по slug, пересылка и конвертация."
+           data-en="Full API for Telegram Star Gifts: fetch available catalog gifts, send regular gifts, buy collectible gifts by slug, transfer, and convert to Stars.">
+          Полноценный API для работы с подарками Telegram: получение каталога, отправка обычных подарков за Stars, покупка коллекционных подарков по <code>slug</code>, пересылка и конвертация.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Параметры и возврат" data-en="Parameters & Return">Параметры и возврат</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>tg.get_star_gifts()</code></td>
+              <td data-ru="Возвращает list[dict] доступных подарков: id, price, convert_stars, is_limited, remains, total (или slug, title, number, is_unique для уникальных)."
+                  data-en="Returns list[dict] of catalog gifts: id, price, convert_stars, is_limited, remains, total (or slug, title, number, is_unique).">
+                Возвращает <code>list[dict]</code> доступных подарков: <code>id</code>, <code>price</code>, <code>convert_stars</code>, <code>is_limited</code>, <code>remains</code>, <code>total</code> (или <code>slug</code>, <code>title</code>, <code>number</code>, <code>is_unique</code>).
+              </td>
+            </tr>
+            <tr>
+              <td><code>tg.send_star_gift(peer_id, gift_id, text="", hide_name=False, upgrade=False)</code></td>
+              <td data-ru="Отправляет подарок gift_id пользователю/чату peer_id с подписью text. Возвращает {'ok': True/False, 'error': ...}."
+                  data-en="Sends gift_id to peer_id with optional caption text, anonymous flag hide_name, and upgrade option. Returns {'ok': bool}.">
+                Отправляет подарок <code>gift_id</code> пользователю <code>peer_id</code> с подписью <code>text</code>. Возвращает <code>{"ok": True/False, "error": ...}</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><code>tg.buy_star_gift(peer_id, slug, text="", hide_name=True)</code></td>
+              <td data-ru="Покупает и отправляет коллекционный (уникальный) подарок по его slug (например 'LushBouquet-123'). Возвращает {'ok': bool}."
+                  data-en="Buys and sends a collectible gift by slug. Returns {'ok': bool}.">
+                Покупает и отправляет коллекционный (уникальный) подарок по его <code>slug</code>. Возвращает <code>{"ok": bool}</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><code>tg.transfer_star_gift(from_peer, message_id, to_peer)</code></td>
+              <td data-ru="Передаёт ваш подарок из сообщения message_id другому пользователю to_peer. Возвращает bool."
+                  data-en="Transfers an owned Star Gift message to to_peer. Returns bool.">
+                Передаёт ваш подарок из сообщения <code>message_id</code> другому пользователю <code>to_peer</code>. Возвращает <code>bool</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><code>tg.convert_star_gift(peer_id, message_id)</code></td>
+              <td data-ru="Конвертирует полученный подарок в звёзды Telegram. Возвращает bool."
+                  data-en="Converts a received Star Gift into Telegram Stars. Returns bool.">
+                Конвертирует полученный подарок в звёзды Telegram. Возвращает <code>bool</code>.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code># Пример: получить список лимитированных подарков и отправить самый дешёвый
+gifts = api.tg.get_star_gifts()
+for g in gifts:
+    if g.get("is_limited") and g.get("remains", 0) > 0:
+        res = api.tg.send_star_gift(
+            peer_id=123456789,
+            gift_id=g["id"],
+            text="Подарок из KuniGram 🍑",
+            hide_name=False
+        )
+        api.log(f"Gift result: {res}")
+        break</code></pre>
+        </div>
       </section>
 
       <section id="api-tg">
@@ -131,76 +227,120 @@ def on_command(cmd, args, msg):
           <thead>
             <tr>
               <th data-ru="Метод" data-en="Method">Метод</th>
-              <th data-ru="Описание" data-en="Description">Описание</th>
+              <th data-ru="Описание и возвращаемое значение" data-en="Description & Return">Описание и возвращаемое значение</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td><code>tg.get_me()</code></td><td data-ru="Текущий аккаунт (id, title, username, is_bot)" data-en="Current user info">Текущий аккаунт (id, title, username, is_bot)</td></tr>
-            <tr><td><code>tg.get_user(peer_id)</code></td><td data-ru="Информация о пользователе или чате" data-en="Fetch peer info">Информация о пользователе или чате</td></tr>
-            <tr><td><code>tg.get_chats(limit=30)</code></td><td data-ru="Список последних диалогов" data-en="List recent chats">Список последних диалогов</td></tr>
-            <tr><td><code>tg.send_message(peer_id, text, reply_to=None)</code></td><td data-ru="Отправить текстовое сообщение" data-en="Send a text message">Отправить текстовое сообщение</td></tr>
-            <tr><td><code>tg.edit_message(peer_id, message_id, text)</code></td><td data-ru="Редактировать сообщение" data-en="Edit an existing message">Редактировать сообщение</td></tr>
-            <tr><td><code>tg.delete_messages(peer_id, message_ids, for_everyone=True)</code></td><td data-ru="Удалить сообщения" data-en="Delete messages">Удалить сообщения</td></tr>
-            <tr><td><code>tg.forward_messages(from_peer, to_peer, message_ids)</code></td><td data-ru="Переслать сообщения" data-en="Forward messages">Переслать сообщения</td></tr>
-            <tr><td><code>tg.send_photo(peer_id, path, caption="")</code></td><td data-ru="Отправить фото по пути к файлу" data-en="Send a photo from local path">Отправить фото по пути к файлу</td></tr>
-            <tr><td><code>tg.send_file(peer_id, path, caption="")</code></td><td data-ru="Отправить документ/файл" data-en="Send any file">Отправить документ/файл</td></tr>
-            <tr><td><code>tg.send_reaction(peer_id, message_id, emoji)</code></td><td data-ru="Поставить реакцию на сообщение" data-en="React to a message">Поставить реакцию на сообщение</td></tr>
-            <tr><td><code>tg.set_typing(peer_id)</code></td><td data-ru="Отправить статус «печатает...»" data-en="Send typing action">Отправить статус «печатает...»</td></tr>
+            <tr><td><code>tg.get_me()</code></td><td data-ru="Профиль текущего аккаунта: {'id': int, 'title': str, 'username': str, 'is_bot': bool}" data-en="Current user dict">Профиль текущего аккаунта: <code>{"id": int, "title": str, "username": str, "is_bot": bool}</code></td></tr>
+            <tr><td><code>tg.get_user(peer_id)</code></td><td data-ru="Информация о пользователе, группе или канале по peer_id" data-en="Fetch peer info by peer_id">Информация о пользователе, группе или канале по <code>peer_id</code></td></tr>
+            <tr><td><code>tg.get_chats(limit=30)</code></td><td data-ru="Список последних диалогов (list[dict])" data-en="List recent chats">Список последних диалогов (<code>list[dict]</code>)</td></tr>
+            <tr><td><code>tg.send_message(peer_id, text, reply_to=None)</code></td><td data-ru="Отправить текстовое сообщение (опционально с reply_to=message_id)" data-en="Send a text message">Отправить текстовое сообщение (опционально с <code>reply_to=message_id</code>)</td></tr>
+            <tr><td><code>tg.edit_message(peer_id, message_id, text)</code></td><td data-ru="Редактировать существующее сообщение" data-en="Edit an existing message">Редактировать существующее сообщение</td></tr>
+            <tr><td><code>tg.delete_messages(peer_id, message_ids, for_everyone=True)</code></td><td data-ru="Удалить список message_ids (или один message_id)" data-en="Delete messages">Удалить список <code>message_ids</code> (или один <code>message_id</code>)</td></tr>
+            <tr><td><code>tg.forward_messages(from_peer, to_peer, message_ids)</code></td><td data-ru="Переслать сообщения из from_peer в to_peer" data-en="Forward messages">Переслать сообщения из <code>from_peer</code> в <code>to_peer</code></td></tr>
+            <tr><td><code>tg.send_photo(peer_id, path, caption="")</code></td><td data-ru="Отправить JPEG/PNG фото по локальному пути" data-en="Send a photo from local path">Отправить JPEG/PNG фото по локальному пути</td></tr>
+            <tr><td><code>tg.send_file(peer_id, path, caption="")</code></td><td data-ru="Отправить любой документ/файл" data-en="Send any file">Отправить любой документ/файл</td></tr>
+            <tr><td><code>tg.send_reaction(peer_id, message_id, emoji)</code></td><td data-ru="Поставить emoji-реакцию на сообщение" data-en="React to a message">Поставить emoji-реакцию на сообщение</td></tr>
+            <tr><td><code>tg.set_typing(peer_id)</code></td><td data-ru="Отправить статус «печатает...» в чат" data-en="Send typing action">Отправить статус «печатает...» в чат</td></tr>
           </tbody>
         </table>
       </section>
 
       <section id="api-net">
         <h2 data-ru="Сеть и WebSocket (api.net / requests)" data-en="Network & WebSocket (api.net / requests)">Сеть и WebSocket (<code>api.net</code> / <code>requests</code>)</h2>
-        <div class="code-wrap">
-          <button class="copy-btn">Copy</button>
-<pre><code>import requests
-import json
-
-resp = requests.post(
-    "https://api.example.com/webhook",
-    json={"event": "ping", "user": "kunigram"},
-    headers={"Authorization": "Bearer TOKEN"}
-)
-if resp["status"] == 200:
-    data = resp["json"]
-    api.log(f"Server replied: {data}")
-
-# WebSocket
-ws = api.net.ws_connect("wss://echo.websocket.events")
-api.net.ws_send(ws, json.dumps({"hello": "server"}))
-api.net.ws_close(ws)</code></pre>
-        </div>
+        <p data-ru="Поддерживаются синхронные HTTP-запросы (get, post, put, delete, request) и постоянные WebSocket-соединения через URLSessionWebSocketTask."
+           data-en="Supports synchronous HTTP requests (get, post, put, delete, request) and persistent WebSocket connections via URLSessionWebSocketTask.">
+          Поддерживаются синхронные HTTP-запросы (<code>get</code>, <code>post</code>, <code>put</code>, <code>delete</code>, <code>request</code>) и постоянные WebSocket-соединения.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Параметры и возврат" data-en="Parameters & Return">Параметры и возврат</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>requests.get(url, params={}, headers={}, timeout=20)</code></td><td data-ru="Возвращает {'status': int, 'text': str, 'json': Any, 'headers': dict}" data-en="Returns {'status', 'text', 'json', 'headers'}">Возвращает <code>{"status": int, "text": str, "json": Any, "headers": dict}</code></td></tr>
+            <tr><td><code>requests.post(url, json=None, data=None, headers={})</code></td><td data-ru="Отправляет JSON или raw body, возвращает тот же dict ответа" data-en="Sends JSON or raw body">Отправляет JSON или raw body, возвращает тот же dict ответа</td></tr>
+            <tr><td><code>requests.put(...) / requests.delete(...)</code></td><td data-ru="HTTP PUT и DELETE запросы" data-en="HTTP PUT and DELETE">HTTP PUT и DELETE запросы</td></tr>
+            <tr><td><code>api.net.request(method, url, headers={}, body=None, timeout=20)</code></td><td data-ru="Произвольный HTTP-метод" data-en="Custom HTTP method">Произвольный HTTP-метод</td></tr>
+            <tr><td><code>api.net.ws_connect(url)</code></td><td data-ru="Открывает WebSocket и возвращает ws_id (str)" data-en="Opens WebSocket and returns ws_id">Открывает WebSocket и возвращает <code>ws_id</code></td></tr>
+            <tr><td><code>api.net.ws_send(ws_id, text) / api.net.ws_close(ws_id)</code></td><td data-ru="Отправляет текст в сокет / закрывает соединение" data-en="Send text / close socket">Отправляет текст в сокет / закрывает соединение</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section id="api-camera">
         <h2 data-ru="Камера и Медиа (api.camera / api.media)" data-en="Camera & Media (api.camera / api.media)">Камера и Медиа (<code>api.camera</code> / <code>api.media</code>)</h2>
-        <div class="code-wrap">
-          <button class="copy-btn">Copy</button>
-<pre><code># Сделать фото с основной или фронтальной камеры ("back" / "front")
-photo = api.camera.take_photo(camera="back")
-if "path" in photo:
-    # Отправить сразу в чат Telegram
-    api.tg.send_photo(peer_id, photo["path"], caption="Снято из плагина KuniGram!")
-    # Или сохранить в Фотоплёнку
-    api.media.save_to_gallery(photo["path"])</code></pre>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th data-ru="Метод" data-en="Method">Метод</th>
+              <th data-ru="Описание" data-en="Description">Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>api.camera.take_photo(camera="back")</code></td><td data-ru="Делает снимок с 'back' или 'front' камеры. Возвращает {'path': str, 'width': int, 'height': int, 'base64': str}." data-en="Takes photo with back/front camera">Делает снимок с <code>"back"</code> или <code>"front"</code> камеры. Возвращает <code>{"path", "width", "height", "base64"}</code>.</td></tr>
+            <tr><td><code>api.media.save_to_gallery(path)</code></td><td data-ru="Сохраняет изображение по path в Фотоплёнку iPhone." data-en="Saves image to iOS Photos">Сохраняет изображение по <code>path</code> в Фотоплёнку iPhone.</td></tr>
+            <tr><td><code>api.media.resize_image(path, width, height)</code></td><td data-ru="Изменяет размер изображения и возвращает путь к новому JPEG-файлу." data-en="Resizes image and returns new path">Изменяет размер изображения и возвращает путь к новому JPEG-файлу.</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section id="api-ui">
         <h2 data-ru="UI, Логи и Хранилище (api.ui / api.storage)" data-en="UI, Logs & Storage (api.ui / api.storage)">UI, Логи и Хранилище (<code>api.ui</code> / <code>api.storage</code>)</h2>
         <ul>
-          <li><code>api.ui.show_toast(text)</code> — <span data-ru="показать всплывающее уведомление внутри Telegram" data-en="show an in-app toast banner">показать всплывающее уведомление внутри Telegram</span></li>
-          <li><code>api.ui.show_alert(title, message)</code> — <span data-ru="показать диалоговое окно" data-en="show an alert dialog">показать диалоговое окно</span></li>
-          <li><code>api.storage.set(key, value)</code> / <code>api.storage.get(key, default=None)</code> — <span data-ru="персистентное JSON-хранилище плагина" data-en="persistent per-plugin JSON storage">персистентное JSON-хранилище плагина</span></li>
-          <li><code>api.log(text)</code> / <code>print(...)</code> — <span data-ru="запись в консоль логов плагина" data-en="write to plugin execution console">запись в консоль логов плагина</span></li>
+          <li><code>api.ui.show_toast(text)</code> — <span data-ru="показывает всплывающий баннер UndoOverlayController поверх интерфейса" data-en="shows an in-app toast banner">показывает всплывающий баннер поверх интерфейса</span></li>
+          <li><code>api.ui.show_alert(title, message)</code> — <span data-ru="открывает системное диалоговое окно Telegram" data-en="shows a Telegram alert dialog">открывает системное диалоговое окно Telegram</span></li>
+          <li><code>api.storage.set(key, value)</code> / <code>get(key, default=None)</code> / <code>delete(key)</code> / <code>keys()</code> — <span data-ru="персистентное JSON-хранилище в Documents/KuniGram/Storage/<id>.json" data-en="persistent JSON storage">персистентное JSON-хранилище в <code>Documents/KuniGram/Storage/&lt;id&gt;.json</code></span></li>
+          <li><code>api.log(text)</code> / <code>print(...)</code> — <span data-ru="пишет в консоль логов плагина (доступна в карточке плагина)" data-en="writes to plugin execution console">пишет в консоль логов плагина (доступна в карточке плагина)</span></li>
+        </ul>
+      </section>
+
+      <section id="stdlib">
+        <h2 data-ru="Встроенный Python и модули" data-en="Built-in Python & Modules">Встроенный Python и модули</h2>
+        <p data-ru="Интерпретатор KuniPyRuntime поддерживает функции (def, return, параметры по умолчанию), циклы (for, while, break, continue), условия (if/elif/else), try/except, f-строки, списки, словари, срезы/индексы и стандартные модули:"
+           data-en="KuniPyRuntime supports functions (def, return, defaults), loops (for, while, break, continue), conditionals, try/except, f-strings, lists, dicts, indexing, and built-in modules:">
+          Интерпретатор <code>KuniPyRuntime</code> поддерживает функции (<code>def</code>, <code>return</code>, значения по умолчанию), циклы (<code>for</code>, <code>while</code>, <code>break</code>, <code>continue</code>), условия (<code>if/elif/else</code>), <code>try/except</code>, f-строки, списки, словари и стандартные модули:
+        </p>
+        <ul>
+          <li><code>json</code>: <code>dumps(obj)</code>, <code>loads(str)</code></li>
+          <li><code>time</code>: <code>time()</code>, <code>sleep(sec)</code></li>
+          <li><code>math</code>: <code>pi</code>, <code>e</code>, <code>sqrt</code>, <code>floor</code>, <code>ceil</code></li>
+          <li><code>random</code>: <code>random()</code>, <code>randint(a, b)</code>, <code>choice(seq)</code></li>
+          <li><code>base64</code>: <code>b64encode(str)</code>, <code>b64decode(str)</code></li>
+          <li><code>hashlib</code>: <code>sha256(str)</code></li>
+          <li><span data-ru="Встроенные функции:" data-en="Built-ins:">Встроенные функции:</span> <code>len</code>, <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>range</code>, <code>abs</code>, <code>print</code></li>
         </ul>
       </section>
 
       <section id="examples">
         <h2 data-ru="Примеры готовых плагинов" data-en="Plugin Examples">Примеры готовых плагинов</h2>
 
-        <h3 data-ru="1. Команда .snap — сделать фото и отправить в чат" data-en="1. .snap command — take photo and send to chat">1. Команда <code>.snap</code> — сделать фото и отправить в чат</h3>
+        <h3 data-ru="1. Авто-отправка подарка по команде .gift" data-en="1. Send Star Gift via .gift command">1. Отправка подарка по команде <code>.gift</code></h3>
+        <div class="code-wrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>__id__ = "gift_sender"
+__name__ = "Star Gift Sender"
+__author__ = "KuniGram"
+__version__ = "1.0"
+__description__ = "Отправляет подарок по команде .gift <id> <текст>"
+
+def on_command(cmd, args, msg):
+    if cmd == "gift":
+        gifts = api.tg.get_star_gifts()
+        if len(gifts) == 0:
+            api.ui.show_toast("Каталог подарков пуст")
+            return
+        gift_id = gifts[0]["id"]
+        res = api.tg.send_star_gift(msg["peer_id"], gift_id, text=args)
+        if res.get("ok"):
+            api.ui.show_toast("Подарок отправлен! 🎁")
+        else:
+            api.ui.show_toast("Ошибка: " + str(res.get("error", "")))</code></pre>
+        </div>
+
+        <h3 data-ru="2. Команда .snap — сделать фото и отправить в чат" data-en="2. .snap command — take photo and send to chat">2. Команда <code>.snap</code> — сделать фото и отправить в чат</h3>
         <div class="code-wrap">
           <button class="copy-btn">Copy</button>
 <pre><code>__id__ = "quick_snap"
@@ -219,7 +359,7 @@ def on_command(cmd, args, msg):
             api.ui.show_toast("Camera error: " + str(res.get("error", "")))</code></pre>
         </div>
 
-        <h3 data-ru="2. Мост с внешним сервером (.ask)" data-en="2. External Server Bridge (.ask)">2. Мост с внешним сервером (<code>.ask</code>)</h3>
+        <h3 data-ru="3. Мост с внешним сервером (.ask)" data-en="3. External Server Bridge (.ask)">3. Мост с внешним сервером (<code>.ask</code>)</h3>
         <div class="code-wrap">
           <button class="copy-btn">Copy</button>
 <pre><code>__id__ = "server_bridge"
