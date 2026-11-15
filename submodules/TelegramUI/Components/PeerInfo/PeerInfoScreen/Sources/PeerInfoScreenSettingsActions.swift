@@ -155,6 +155,8 @@ extension PeerInfoScreenNode {
             push(themeSettingsController(context: self.context))
         case .kunigram:
             push(kuniGramSettingsController(context: self.context))
+        case .gramWallet:
+            push(kuniGramGramWalletController(context: self.context))
         case .language:
             push(LocalizationListController(context: self.context))
         case .premium:

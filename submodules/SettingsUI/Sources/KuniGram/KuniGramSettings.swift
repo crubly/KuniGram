@@ -61,6 +61,9 @@ public struct KuniGramStrings {
     public var kuniGramTitle: String { "KuniGram" }
     public var pluginsEngineTitle: String { self.isRussian ? "Ядро Плагинов" : "Plugins Engine" }
     public var pluginsEngineHeader: String { self.isRussian ? "УПРАВЛЕНИЕ ПЛАГИНАМИ (PYTHON)" : "PLUGIN MANAGEMENT (PYTHON)" }
+    public var otherHeader: String { self.isRussian ? "ПРОЧЕЕ" : "OTHER" }
+    public var giftsTitle: String { self.isRussian ? "Подарки" : "Gifts" }
+    public var gramWalletTitle: String { self.isRussian ? "Gram Кошелёк" : "Gram Wallet" }
     public var additionalSettingsTitle: String { self.isRussian ? "Дополнительные настройки" : "Additional Settings" }
     public var loadPluginTitle: String { self.isRussian ? "Загрузить плагин (.py)" : "Load Plugin (.py)" }
     public var pastePluginTitle: String { self.isRussian ? "Вставить плагин из буфера" : "Paste Plugin from Clipboard" }

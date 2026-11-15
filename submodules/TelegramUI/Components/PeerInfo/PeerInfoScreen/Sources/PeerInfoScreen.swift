@@ -177,6 +177,7 @@ enum PeerInfoSettingsSection {
     case dataAndStorage
     case appearance
     case kunigram
+    case gramWallet
     case language
     case stickers
     case premium
