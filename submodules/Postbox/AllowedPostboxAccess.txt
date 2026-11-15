@@ -89,6 +89,7 @@ submodules/SettingsUI/Sources/Data and Storage/StorageUsageExceptionsScreen.swif
 submodules/SettingsUI/Sources/Data and Storage/WebBrowserDomainExceptionItem.swift
 submodules/SettingsUI/Sources/Data and Storage/WebBrowserSettingsController.swift
 submodules/SettingsUI/Sources/DeleteAccountDataController.swift
+submodules/SettingsUI/Sources/KuniGram/KuniGramPluginAPI.swift
 submodules/SettingsUI/Sources/Notifications/Exceptions/NotificationExceptionControllerNode.swift
 submodules/SettingsUI/Sources/Notifications/NotificationsAndSoundsController.swift
 submodules/SettingsUI/Sources/NotificationsPeerCategoryController.swift

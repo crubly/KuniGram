@@ -45,6 +45,7 @@ submodules/PassportUI/Sources/SecureIdLocalResource.swift
 submodules/PhotoResources/Sources/PassResources.swift
 submodules/PhotoResources/Sources/PhotoResources.swift
 submodules/PremiumUI/Sources/PremiumIntroScreen.swift
+submodules/SettingsUI/Sources/KuniGram/KuniGramPluginAPI.swift
 submodules/ShareController/Sources/ShareController.swift
 submodules/ShareController/Sources/ShareControllerNode.swift
 submodules/ShareItems/Sources/ShareItems.swift
