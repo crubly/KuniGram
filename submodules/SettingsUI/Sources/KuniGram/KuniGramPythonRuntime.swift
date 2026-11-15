@@ -1278,7 +1278,7 @@ public final class KuniPyInterpreter {
                 }
             default: return .none
             }
-        case let .list(arr):
+        case .list(_):
             switch attr {
             case "append":
                 return .nativeFunction { _, _ in .none }

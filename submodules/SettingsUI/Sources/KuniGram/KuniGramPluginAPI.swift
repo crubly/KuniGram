@@ -58,7 +58,7 @@ public final class KuniGramPluginAPI {
     // MARK: - Telegram API (`api.tg`)
 
     public func buildTelegramModule() -> KuniPyValue {
-        return .object([
+        let methods: [String: KuniPyValue] = [
             "get_me": .nativeFunction { [weak self] _, _ in
                 guard let self = self, let context = self.context else { return .none }
                 let semaphore = DispatchSemaphore(value: 0)
@@ -463,13 +463,14 @@ public final class KuniGramPluginAPI {
                 self.logHandler("tg.set_name -> \(first) \(last)")
                 return .bool(true)
             }
-        ])
+        ]
+        return .object(methods)
     }
 
     private static func peerToPyDict(_ peer: EnginePeer) -> KuniPyValue {
         return .dict([
             "id": .int(peer.id.toInt64()),
-            "title": .string(peer.displayTitle(strings: PresentationStrings.defaultStrings, displayOrder: .firstLast)),
+            "title": .string(peer.compactDisplayTitle),
             "username": .string(peer.addressName ?? ""),
             "is_bot": .bool({
                 if case let .user(u) = peer { return u.botInfo != nil }

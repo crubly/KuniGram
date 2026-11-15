@@ -182,7 +182,7 @@ public func kuniGramPluginDetailController(context: AccountContext, pluginId: St
             let alert = textAlertController(
                 context: context,
                 title: strings.deleteConfirmTitle,
-                text: nil,
+                text: "",
                 actions: [
                     TextAlertAction(type: .destructiveAction, title: strings.deleteTitle, action: {
                         KuniGramPluginEngine.shared.deletePlugin(id: pluginId)
