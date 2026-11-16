@@ -1582,11 +1582,9 @@ class Keychain: NSObject, MTKeychain {
 }
 #if os(iOS)
 func makeCloudDataContext(encryptionProvider: EncryptionProvider) -> CloudDataContext? {
-    if #available(iOS 10.0, *) {
-        return CloudDataContextImpl(encryptionProvider: encryptionProvider)
-    } else {
-        return nil
-    }
+    // CloudKit emergency datacenter fallback crashes with EXC_BREAKPOINT on sideloaded builds lacking iCloud entitlements.
+    _ = encryptionProvider
+    return nil
 }
 #endif
 
