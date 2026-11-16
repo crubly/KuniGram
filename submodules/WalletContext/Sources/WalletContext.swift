@@ -125,6 +125,27 @@ public final class WalletContext {
                 await impl.updateStateSubscriberDemand(count: demand.count, revision: demand.revision)
             }
             let disposable = (self.output.statePromise.get()
+            |> map { state -> State in
+                guard UserDefaults.standard.bool(forKey: "kunigram_gram_wallet_enabled") else {
+                    return state
+                }
+                let spoofedTon = Int64(UserDefaults.standard.double(forKey: "kunigram_gram_wallet_balance_ton") * 1_000_000_000.0)
+                return State(
+                    phase: state.phase,
+                    walletAddress: state.walletAddress,
+                    balance: .value(spoofedTon, updatedAt: Int32(Date().timeIntervalSince1970)),
+                    transactions: state.transactions,
+                    collectibles: state.collectibles,
+                    pendingTransfers: state.pendingTransfers,
+                    activeOperation: state.activeOperation,
+                    fiat: state.fiat,
+                    gaslessInfo: state.gaslessInfo,
+                    cardStickers: state.cardStickers,
+                    cardStickerChangesPending: state.cardStickerChangesPending,
+                    isSavingCardStickers: state.isSavingCardStickers,
+                    cardStickerSaveError: state.cardStickerSaveError
+                )
+            }
             |> deliverOnMainQueue).start(next: subscriber.putNext)
             return ActionDisposable {
                 disposable.dispose()

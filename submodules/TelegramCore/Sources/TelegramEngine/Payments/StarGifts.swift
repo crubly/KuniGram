@@ -1967,6 +1967,7 @@ private final class ProfileGiftsContextImpl {
     private let disposable = MetaDisposable()
     private let cacheDisposable = MetaDisposable()
     private let actionDisposable = MetaDisposable()
+    private var localGiftsObserver: NSObjectProtocol?
     
     private var sorting: ProfileGiftsContext.Sorting
     private var filter: ProfileGiftsContext.Filters
@@ -2006,12 +2007,25 @@ private final class ProfileGiftsContextImpl {
         self.limit = limit
         
         self.loadMore()
+
+        self.localGiftsObserver = NotificationCenter.default.addObserver(
+            forName: KuniGramLocalProfileGifts.didChangeNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            queue.async {
+                self?.pushState()
+            }
+        }
     }
-    
+
     deinit {
         self.disposable.dispose()
         self.cacheDisposable.dispose()
         self.actionDisposable.dispose()
+        if let observer = self.localGiftsObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     func reload() {
@@ -2762,14 +2776,31 @@ private final class ProfileGiftsContextImpl {
     private func pushState() {
         let useMainData = (self.filter == .All && self.sorting == .date) || self.filteredCount == nil
         
-        let effectiveGifts = useMainData ? self.gifts : self.filteredGifts
-        let effectiveCount = useMainData ? self.count : self.filteredCount
+        var allGifts = self.gifts
+        var effectiveGifts = useMainData ? self.gifts : self.filteredGifts
+        var effectiveCount = useMainData ? self.count : self.filteredCount
         let effectiveDataState = useMainData ? self.dataState : self.filteredDataState
+        
+        if self.peerId == self.account.peerId {
+            let localGifts = KuniGramLocalProfileGifts.shared.gifts
+            if !localGifts.isEmpty {
+                allGifts = localGifts + allGifts
+                let includeInFiltered = self.filter == .All || self.filter.contains(.unique) || self.filter.contains(.displayed)
+                if includeInFiltered {
+                    effectiveGifts = localGifts + effectiveGifts
+                }
+                if let count = effectiveCount {
+                    effectiveCount = count + Int32(localGifts.count)
+                } else {
+                    effectiveCount = Int32(effectiveGifts.count)
+                }
+            }
+        }
         
         let state = ProfileGiftsContext.State(
             filter: self.filter,
             sorting: self.sorting,
-            gifts: self.gifts,
+            gifts: allGifts,
             filteredGifts: effectiveGifts,
             count: effectiveCount,
             dataState: effectiveDataState,
@@ -4749,4 +4780,143 @@ func _internal_getStarGiftUpgradeAttributes(account: Account, giftId: Int64) -> 
         }
     }
     |> switchToLatest
+}
+
+public final class KuniGramLocalProfileGifts: @unchecked Sendable {
+    public static let shared = KuniGramLocalProfileGifts()
+    public static let didChangeNotification = Notification.Name("KuniGramLocalProfileGiftsDidChange")
+
+    private let lock = NSLock()
+    private let fileURL: URL
+    private var items: [ProfileGiftsContext.State.StarGift] = []
+
+    private init() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let dir = docs.appendingPathComponent("KuniGram", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        self.fileURL = dir.appendingPathComponent("local_profile_gifts.json")
+        if let data = try? Data(contentsOf: self.fileURL),
+           let decoded = try? JSONDecoder().decode([ProfileGiftsContext.State.StarGift].self, from: data) {
+            self.items = decoded
+        }
+    }
+
+    public var gifts: [ProfileGiftsContext.State.StarGift] {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self.items
+    }
+
+    public func contains(slug: String) -> Bool {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self.items.contains { item in
+            if case let .unique(u) = item.gift {
+                return u.slug.caseInsensitiveCompare(slug) == .orderedSame
+            }
+            return false
+        }
+    }
+
+    public func uniqueGift(slug: String) -> StarGift.UniqueGift? {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        for item in self.items {
+            if case let .unique(u) = item.gift, u.slug.caseInsensitiveCompare(slug) == .orderedSame {
+                return u
+            }
+        }
+        return nil
+    }
+
+    public func add(_ gift: ProfileGiftsContext.State.StarGift) {
+        self.lock.lock()
+        self.items.removeAll { item in
+            if case let .unique(u1) = item.gift, case let .unique(u2) = gift.gift {
+                return u1.slug.caseInsensitiveCompare(u2.slug) == .orderedSame
+            }
+            return false
+        }
+        self.items.insert(gift, at: 0)
+        let copy = self.items
+        self.lock.unlock()
+        self.saveAndNotify(copy)
+    }
+
+    public func remove(slug: String) {
+        self.lock.lock()
+        self.items.removeAll { item in
+            if case let .unique(u) = item.gift {
+                return u.slug.caseInsensitiveCompare(slug) == .orderedSame
+            }
+            return false
+        }
+        let copy = self.items
+        self.lock.unlock()
+        self.saveAndNotify(copy)
+    }
+
+    public func transferLocally(slug: String, account: Account, toPeerId: EnginePeer.Id) {
+        guard let unique = self.uniqueGift(slug: slug) else {
+            self.remove(slug: slug)
+            return
+        }
+        self.remove(slug: slug)
+        let timestamp = Int32(Date().timeIntervalSince1970)
+        let media = TelegramMediaAction(action: .starGiftUnique(
+            gift: .unique(unique),
+            isUpgrade: false,
+            isTransferred: true,
+            savedToProfile: false,
+            canExportDate: nil,
+            transferStars: nil,
+            isRefunded: false,
+            isPrepaidUpgrade: false,
+            peerId: toPeerId,
+            senderId: account.peerId,
+            savedId: nil,
+            resaleAmount: nil,
+            canTransferDate: nil,
+            canResaleDate: nil,
+            dropOriginalDetailsStars: nil,
+            assigned: false,
+            fromOffer: false,
+            canCraftAt: nil,
+            isCrafted: false,
+            text: nil,
+            entities: nil,
+            nameHidden: false
+        ))
+        let message = StoreMessage(
+            peerId: toPeerId,
+            namespace: Namespaces.Message.Local,
+            customStableId: nil,
+            globallyUniqueId: Int64.random(in: Int64.min ... Int64.max),
+            groupingKey: nil,
+            threadId: nil,
+            timestamp: timestamp,
+            flags: [],
+            tags: [],
+            globalTags: [],
+            localTags: [],
+            forwardInfo: nil,
+            authorId: account.peerId,
+            text: "",
+            attributes: [],
+            media: [media]
+        )
+        let _ = account.postbox.transaction { transaction in
+            let _ = transaction.addMessages([message], location: .UpperHistoryBlock)
+        }.start()
+    }
+
+    private func saveAndNotify(_ copy: [ProfileGiftsContext.State.StarGift]) {
+        if let data = try? JSONEncoder().encode(copy) {
+            try? data.write(to: self.fileURL)
+        }
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+        }
+    }
 }

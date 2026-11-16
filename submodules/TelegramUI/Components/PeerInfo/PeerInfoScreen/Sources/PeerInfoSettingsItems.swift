@@ -155,8 +155,14 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         }))
         
         if WalletConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 }).isAvailable {
+            let effectiveWalletBalance: Int64?
+            if UserDefaults.standard.bool(forKey: "kunigram_gram_wallet_enabled") {
+                effectiveWalletBalance = Int64(UserDefaults.standard.double(forKey: "kunigram_gram_wallet_balance_ton") * 1_000_000_000.0)
+            } else {
+                effectiveWalletBalance = settings.walletBalance
+            }
             let balanceText: NSAttributedString
-            if let balance = settings.walletBalance, balance > 10_000_000 {
+            if let balance = effectiveWalletBalance, balance > 10_000_000 {
                 var formattedLabel = formatTonAmountText(balance, dateTimeFormat: presentationData.dateTimeFormat)
                 if let decimalRange = formattedLabel.range(of: presentationData.dateTimeFormat.decimalSeparator) {
                     let fractionalDigitsCount = formattedLabel[decimalRange.upperBound...].count
@@ -199,13 +205,6 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     items[.kunigram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .text("Plugins"), text: "KuniGram", icon: PresentationResourcesSettings.appearance, action: {
         interaction.openSettings(.kunigram)
     }))
-    if UserDefaults.standard.bool(forKey: "kunigram_gram_wallet_enabled") {
-        let balanceStr = String(format: "%.2f TON", UserDefaults.standard.double(forKey: "kunigram_gram_wallet_balance_ton"))
-        let walletTitle = presentationData.strings.primaryComponent.languageCode.lowercased().hasPrefix("ru") ? "Gram Кошелёк" : "Gram Wallet"
-        items[.wallet]!.append(PeerInfoScreenDisclosureItem(id: 1, label: .text(balanceStr), text: walletTitle, icon: PresentationResourcesSettings.stars, action: {
-            interaction.openSettings(.gramWallet)
-        }))
-    }
 
     var appIndex = 1000
     if let settings = data.globalSettings {

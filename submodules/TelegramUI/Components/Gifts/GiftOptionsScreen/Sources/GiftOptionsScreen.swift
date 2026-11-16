@@ -931,7 +931,12 @@ final class GiftOptionsScreenComponent: Component {
                         var errorImpl: ((TransferStarGiftError) -> Void)?
                         var completedImpl: (() -> Void)?
                         
-                        if waitForTopUp, let starsContext = context.starsContext {
+                        if KuniGramLocalProfileGifts.shared.contains(slug: transferGift.slug) {
+                            KuniGramLocalProfileGifts.shared.transferLocally(slug: transferGift.slug, account: context.account, toPeerId: peer.id)
+                            Queue.mainQueue().async {
+                                completedImpl?()
+                            }
+                        } else if waitForTopUp, let starsContext = context.starsContext {
                             let _ = (starsContext.onUpdate
                             |> deliverOnMainQueue).start(next: {
                                 let _ = (context.engine.payments.transferStarGift(prepaid: gift.transferStars == 0, reference: reference, peerId: peer.id)

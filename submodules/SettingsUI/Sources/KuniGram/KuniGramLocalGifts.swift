@@ -75,6 +75,24 @@ public final class KuniGramLocalGiftStore {
         self.giftsFileURL = dir.appendingPathComponent("local_gifts.json")
         self.walletNFTsFileURL = dir.appendingPathComponent("wallet_nfts.json")
         self.load()
+        NotificationCenter.default.addObserver(
+            forName: KuniGramLocalProfileGifts.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            let activeSlugs = Set(KuniGramLocalProfileGifts.shared.gifts.compactMap { item -> String? in
+                if case let .unique(u) = item.gift { return u.slug.lowercased() }
+                return nil
+            })
+            let before = self.gifts.count
+            self.gifts.removeAll { gift in
+                !gift.isCrafted && !activeSlugs.contains(gift.slug.lowercased())
+            }
+            if self.gifts.count != before {
+                self.save()
+            }
+        }
     }
 
     public var isGramWalletEnabled: Bool {
@@ -171,6 +189,32 @@ public final class KuniGramLocalGiftStore {
                 backdropName: backdropName,
                 symbolName: symbolName
             )
+            let profileGift = ProfileGiftsContext.State.StarGift(
+                gift: .unique(unique),
+                reference: .slug(slug: unique.slug),
+                fromPeer: nil,
+                date: Int32(Date().timeIntervalSince1970),
+                text: nil,
+                entities: nil,
+                nameHidden: false,
+                savedToProfile: true,
+                pinnedToTop: false,
+                convertStars: nil,
+                canUpgrade: false,
+                canExportDate: nil,
+                upgradeStars: nil,
+                transferStars: 0,
+                canTransferDate: nil,
+                canResaleDate: nil,
+                collectionIds: nil,
+                prepaidUpgradeHash: nil,
+                upgradeSeparate: false,
+                dropOriginalDetailsStars: nil,
+                number: unique.number,
+                isRefunded: false,
+                canCraftAt: nil
+            )
+            KuniGramLocalProfileGifts.shared.add(profileGift)
             self.gifts.insert(gift, at: 0)
             self.save()
             completion(gift)
@@ -191,6 +235,9 @@ public final class KuniGramLocalGiftStore {
     }
 
     public func deleteGift(id: String) {
+        if let gift = self.gifts.first(where: { $0.id == id }) {
+            KuniGramLocalProfileGifts.shared.remove(slug: gift.slug)
+        }
         self.gifts.removeAll { $0.id == id }
         if self.activeWalletCustomizationGiftId == id {
             self.activeWalletCustomizationGiftId = nil
@@ -205,10 +252,69 @@ public final class KuniGramLocalGiftStore {
         self.save()
     }
 
-    public func sendGiftLocallyToPeer(id: String, peerTitle: String) {
-        guard let idx = self.gifts.firstIndex(where: { $0.id == id }) else { return }
-        self.gifts[idx].sentToPeerTitle = peerTitle
-        self.save()
+    public func sendGiftLocallyToPeer(id: String, peerTitle: String, context: AccountContext? = nil, completion: ((Bool, String) -> Void)? = nil) {
+        guard let idx = self.gifts.firstIndex(where: { $0.id == id }) else {
+            completion?(false, peerTitle)
+            return
+        }
+        let gift = self.gifts[idx]
+        guard let context = context else {
+            self.gifts.remove(at: idx)
+            KuniGramLocalProfileGifts.shared.remove(slug: gift.slug)
+            self.save()
+            completion?(true, peerTitle)
+            return
+        }
+
+        let trimmed = peerTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = trimmed.lowercased()
+        if lower == "saved messages" || lower == "избранное" || lower == "me" {
+            KuniGramLocalProfileGifts.shared.transferLocally(slug: gift.slug, account: context.account, toPeerId: context.account.peerId)
+            self.gifts.removeAll { $0.id == id }
+            self.save()
+            completion?(true, trimmed)
+            return
+        }
+
+        let cleanName = trimmed.hasPrefix("@") ? String(trimmed.dropFirst()) : trimmed
+        let resolveSignal: Signal<EnginePeer?, NoError> = context.engine.peers.resolvePeerByName(name: cleanName, referrer: nil)
+        |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
+            switch result {
+            case .progress:
+                return .complete()
+            case let .result(peer):
+                return .single(peer)
+            }
+        }
+        |> take(1)
+
+        let _ = (resolveSignal
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] peer in
+            guard let self = self else { return }
+            if let peer = peer {
+                KuniGramLocalProfileGifts.shared.transferLocally(slug: gift.slug, account: context.account, toPeerId: peer.id)
+                self.gifts.removeAll { $0.id == id }
+                self.save()
+                completion?(true, peer.compactDisplayTitle)
+            } else {
+                let _ = (context.engine.messages.chatListPeers(group: .root, filterPredicate: nil, count: 100)
+                |> take(1)
+                |> deliverOnMainQueue).startStandalone(next: { [weak self] peers, _ in
+                    guard let self = self else { return }
+                    if let matched = peers.first(where: {
+                        $0.compactDisplayTitle.lowercased() == lower ||
+                        ($0.addressName?.lowercased() == cleanName.lowercased())
+                    }) {
+                        KuniGramLocalProfileGifts.shared.transferLocally(slug: gift.slug, account: context.account, toPeerId: matched.id)
+                        self.gifts.removeAll { $0.id == id }
+                        self.save()
+                        completion?(true, matched.compactDisplayTitle)
+                    } else {
+                        completion?(false, trimmed)
+                    }
+                })
+            }
+        })
     }
 
     public func craftGift(from ids: [String]) -> KuniGramLocalGift? {

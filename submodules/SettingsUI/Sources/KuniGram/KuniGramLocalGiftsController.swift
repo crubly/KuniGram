@@ -204,8 +204,13 @@ public func kuniGramLocalGiftsController(context: AccountContext) -> ViewControl
                     peerAlert.addAction(UIAlertAction(title: isRu ? "Отправить" : "Send", style: .default, handler: { _ in
                         let target = peerAlert.textFields?.first?.text ?? "Saved Messages"
                         let clean = target.isEmpty ? "Saved Messages" : target
-                        KuniGramLocalGiftStore.shared.sendGiftLocallyToPeer(id: gift.id, peerTitle: clean)
-                        showToast((isRu ? "Визуально отправлено → " : "Visually sent → ") + clean)
+                        KuniGramLocalGiftStore.shared.sendGiftLocallyToPeer(id: gift.id, peerTitle: clean, context: context) { ok, resolvedTitle in
+                            if ok {
+                                showToast((isRu ? "Визуально отправлено → " : "Visually sent → ") + resolvedTitle)
+                            } else {
+                                showToast((isRu ? "Чат не найден: " : "Chat not found: ") + resolvedTitle)
+                            }
+                        }
                     }))
                     presentUIKitImpl?(peerAlert)
                 }
